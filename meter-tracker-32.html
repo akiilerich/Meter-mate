@@ -1,0 +1,2373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="Meter" />
+  <meta name="theme-color" content="#7B6EF6" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <title>Meter</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --grad-start:#5C52B8; --grad-end:#4475B8;
+      --grad:linear-gradient(135deg,var(--grad-start),var(--grad-end));
+      --bg:#F0F2FF; --surface:#FFFFFF; --surface2:#F7F8FF; --border:#E8EAF8;
+      --text:#1A1C3A; --text2:#5A5F8A; --text3:#606592;
+      --purple:#7B6EF6; --blue:#5B9CF6; --green:#4ECFA8; --red:#F06A6A; --amber:#F5A623;
+      /* Text-only variants of amber/red/green (§5.4 contrast re-check).
+         The bright tokens above are correct for icon fills, badge
+         backgrounds, and borders, but fail WCAG AA as small text on
+         --surface/--surface2 (as low as 1.83:1). These darker variants
+         are for anything using amber/red/green as a `color` on text —
+         swap the token, not the design intent. Dark mode keeps the
+         bright originals since they already clear 4.5:1 there. */
+      --amber-text:#936315; --red-text:#A84A4A; --green-text:#2E7C64;
+      --shadow:0 2px 12px rgba(123,110,246,0.10);
+      --shadow-lg:0 8px 32px rgba(123,110,246,0.15);
+      --radius:16px; --radius-sm:10px; --radius-pill:999px;
+    }
+    .dark {
+      --bg:#0E0F1E; --surface:#181929; --surface2:#1F2138; --border:#2A2D4A;
+      --text:#EEEEFF; --text2:#A2A7CE; --text3:#8B90B8;
+      --amber-text:#F5A623; --red-text:#F06A6A; --green-text:#4ECFA8;
+      --shadow:0 2px 12px rgba(0,0,0,0.35);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+    /* §8 — visible focus for keyboard/switch-control users. :active is
+       styled everywhere in this file but :focus-visible was nowhere,
+       meaning tabbing through the app gave no position indicator at all.
+       One universal rule covers every button, link, and input rather
+       than adding it piecemeal per component. :focus-visible (not
+       :focus) so mouse/touch interaction — which already gets its own
+       :active feedback — doesn't also show an outline that only matters
+       for keyboard navigation. */
+    button:focus-visible, input:focus-visible, select:focus-visible, a:focus-visible {
+      outline: 2px solid var(--purple);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+    /* Icon-only header buttons sit on a coloured background where the
+       purple outline would have poor contrast against the header itself
+       — white outline reads correctly there instead. */
+    .hdr-btn:focus-visible, .fuel-btn:focus-visible {
+      outline: 2px solid #fff;
+      outline-offset: 2px;
+    }
+    body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;font-size:16px;line-height:1.5;min-height:100vh;transition:background 0.25s,color 0.25s;overscroll-behavior:none;}
+    .app{max-width:480px;margin:0 auto;padding-bottom:calc(64px + env(safe-area-inset-bottom));position:relative;}
+    .page{display:none;min-height:100vh;}
+    .page.active{display:block;animation:fadeIn 0.18s ease;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+    /* Page header */
+    .page-header{background:var(--grad);padding:48px 20px 22px;position:relative;overflow:hidden;}
+    /* §5.5 — the decorative ::before/::after circles that used to sit here
+       (content:'', two semi-transparent circles) carried zero information
+       and existed purely as visual filler. Removed; the Meter page now
+       fills that same visual weight with a real usage sparkline instead
+       (see #meter-header-sparkline below) — other page headers (Insights,
+       History, Settings) simply have no circles now, which is a fine
+       outcome since a usage trend has no obvious relationship to any of
+       those pages anyway. */
+    .page-header-row{display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1;}
+    /* §5.5 — sits behind the header text (z-index below .page-header-row's
+       z-index:1) at low opacity, matching the same "faint background
+       texture" visual role the decorative circles used to play, but this
+       one is an actual chart. */
+    #meter-header-sparkline{position:absolute;inset:0;opacity:0.35;pointer-events:none;}
+    .page-eyebrow{font-size:12px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.7);margin-bottom:4px;}
+    .page-title{font-size:26px;font-weight:800;color:#fff;letter-spacing:-0.02em;}
+    .header-actions{display:flex;gap:8px;margin-top:4px;}
+    .hdr-btn{background:rgba(255,255,255,0.18);border:none;border-radius:var(--radius-pill);color:#fff;cursor:pointer;padding:7px 11px;font-size:16px;line-height:1;backdrop-filter:blur(4px);transition:background 0.15s;}
+    .hdr-btn:active{background:rgba(255,255,255,0.28);}
+
+    /* §5.1 — balance-driven urgency, applied only to the Meter page header
+       (the one screen where "how urgent is my situation" is the whole
+       point). Other pages keep the neutral fuel-coloured --grad so the
+       app doesn't look alarming while you're just checking Insights or
+       History. Healthy uses the app's existing green-teal token, matching
+       the doc's "calm green-teal" rather than the default purple/blue —
+       a deliberate signal that "all fine" looks different from "neutral". */
+    /* Contrast-corrected from the original bright §5.1 palette
+       (#4ECFA8/#F5A623/#F06A6A) — those failed WCAG AA badly for the
+       white header title and eyebrow sitting on them (as low as 2.48:1).
+       These deeper tones clear 4.5:1 for both ends of each gradient
+       while staying clearly identifiable as green/amber/red. */
+    #meter-header.urgency-healthy{background:linear-gradient(135deg,#2E7C64,#1B6E60);transition:background 0.3s;}
+    #meter-header.urgency-low{background:linear-gradient(135deg,#936315,#904F0F);transition:background 0.3s;}
+    #meter-header.urgency-critical{background:linear-gradient(135deg,#C05454,#AD3939);transition:background 0.3s;}
+
+    /* Fuel toggle */
+    .fuel-toggle{display:flex;gap:4px;background:rgba(0,0,0,0.15);border-radius:var(--radius-pill);padding:3px;margin-top:14px;align-self:flex-start;}
+    .fuel-btn{border:none;border-radius:var(--radius-pill);background:transparent;color:rgba(255,255,255,0.65);font-family:inherit;font-size:12px;font-weight:600;padding:6px 14px;cursor:pointer;transition:all 0.18s;white-space:nowrap;}
+    .fuel-btn.active{background:rgba(255,255,255,0.22);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.15);}
+
+    .page-body{padding:16px 16px 0;}
+    .card{background:var(--surface);border-radius:var(--radius);padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow);}
+    .card-title{font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text2);margin-bottom:14px;}
+    .card-sub{font-size:12px;color:var(--text3);margin-top:-10px;margin-bottom:12px;}
+
+    /* §5.2 — the old gradient-text hero (.rate-hero/.rate-main/.rate-sub)
+       was superseded by .balance-hero-value in §4.1 but the dead rules
+       were left in place as a landmine: solid, urgency-tinted colour is
+       what's actually rendered now, and gradient text on a numeral fails
+       WCAG contrast outright and is invisible without background-clip
+       support. Removed rather than left unused. */
+    .rate-sc-note{font-size:12px;color:var(--text3);margin-top:2px;}
+    .rate-trend{font-size:12px;font-weight:700;margin-top:8px;}
+    .rate-trend.up{color:var(--red-text);}
+    .rate-trend.down{color:var(--green-text);}
+    .rate-trend.flat{color:var(--text3);}
+
+    /* Balance hero — the primary figure on the Meter page (§4.1). Solid,
+       urgency-tinted colour per §5.2 rationale — no gradient-text here,
+       this number has to be legible at a glance, not decorative. */
+    .balance-hero{text-align:center;padding:8px 0 4px;}
+    .balance-hero-value{font-size:48px;font-weight:800;letter-spacing:-0.03em;line-height:1;color:var(--text);}
+    .balance-hero-value.warn{color:var(--amber-text);}
+    .balance-hero-value.danger{color:var(--red-text);}
+    .balance-hero-value.healthy{color:var(--green-text);}
+    .balance-hero-sub{font-size:14px;color:var(--text2);font-weight:500;margin-top:6px;}
+    .balance-hero-runout{margin-top:14px;}
+    .balance-hero-runout .runout-date{font-size:15px;}
+    .plan-topup-btn{
+      width:100%;margin-top:14px;background:var(--surface2);border:1.5px solid var(--border);
+      border-radius:var(--radius-pill);color:var(--purple);font-family:inherit;font-size:13px;
+      font-weight:700;padding:11px;cursor:pointer;
+    }
+    .plan-topup-btn:active{opacity:0.8;}
+    .rate-context{font-size:13px;color:var(--text2);margin-top:2px;}
+    .rate-context strong{color:var(--text);font-weight:700;}
+
+    /* Top-up planner (§6.1) */
+    .planner-label{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:8px;}
+    .planner-date-input{
+      width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);
+      color:var(--text);padding:11px 14px;font-size:15px;font-family:inherit;font-weight:600;outline:none;
+    }
+    .planner-date-input:focus{border-color:var(--purple);}
+    .planner-amount-row{
+      display:flex;align-items:center;background:var(--surface2);border:1.5px solid var(--border);
+      border-radius:var(--radius-sm);overflow:hidden;
+    }
+    .planner-amount-row:focus-within{border-color:var(--purple);}
+    .planner-pound{font-size:18px;font-weight:700;color:var(--text2);padding:0 4px 0 14px;}
+    .planner-amount-row input{
+      flex:1;border:none;background:transparent;outline:none;font-size:18px;font-weight:700;
+      color:var(--text);padding:11px 10px;font-family:inherit;-webkit-appearance:none;min-width:0;
+    }
+    .planner-result{font-size:14px;color:var(--text);margin-top:10px;line-height:1.5;min-height:20px;}
+    .planner-result strong{font-size:18px;color:var(--purple);font-weight:800;}
+    .planner-result .planner-sub{font-size:12px;color:var(--text3);display:block;margin-top:2px;}
+    .planner-result.empty{color:var(--text3);font-size:12px;}
+
+    /* Stats */
+    .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+    .stat-box{background:var(--surface2);border-radius:var(--radius-sm);padding:12px 14px;}
+    .stat-label{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;}
+    .stat-value{font-size:17px;font-weight:700;color:var(--text);}
+    .stat-value.accent{color:var(--purple);}
+    .stat-value.green{color:var(--green-text);}
+    .stat-value.red{color:var(--red-text);}
+    .stat-sub{font-size:12px;color:var(--text3);margin-top:2px;}
+    hr.divider{border:none;border-top:1px solid var(--border);margin:12px 0;}
+
+    /* Period pills */
+    .period-row{display:flex;gap:6px;margin-bottom:14px;}
+    .period-btn{flex:1;border:none;border-radius:var(--radius-pill);background:var(--surface2);color:var(--text2);font-family:inherit;font-size:12px;font-weight:600;padding:7px 4px;cursor:pointer;text-align:center;transition:all 0.15s;}
+    .period-btn.active{background:var(--grad);color:#fff;box-shadow:0 2px 8px rgba(123,110,246,0.3);}
+
+    /* Alert banner */
+    .alert-banner{border-radius:var(--radius-sm);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+    .alert-banner.warn{background:#FEF6E6;border:1px solid #F5A62344;}
+    .alert-banner.danger{background:#FEEAEA;border:1px solid #F06A6A44;}
+    .dark .alert-banner.warn{background:#2E2510;}
+    .dark .alert-banner.danger{background:#2E1A1A;}
+    .alert-icon{font-size:20px;flex-shrink:0;}
+    .alert-icon.warn{color:var(--amber-text);}
+    .alert-icon.danger{color:var(--red-text);}
+    .alert-main{font-size:13px;font-weight:700;}
+    .alert-main.warn{color:var(--amber-text);}
+    .alert-main.danger{color:var(--red-text);}
+    .alert-sub{font-size:12px;color:var(--text2);margin-top:2px;}
+
+    /* Progress bar */
+    .progress-wrap{background:var(--surface2);border-radius:var(--radius-pill);height:6px;margin:10px 0;overflow:hidden;}
+    .progress-fill{height:100%;border-radius:var(--radius-pill);background:var(--grad);transition:width 0.4s;}
+    .progress-fill.warn{background:linear-gradient(90deg,var(--amber),#F5C623);}
+    .progress-fill.danger{background:linear-gradient(90deg,var(--red),#F09A6A);}
+    .progress-fill.healthy{background:linear-gradient(90deg,var(--green),#3AB090);}
+    .runout-row{display:flex;align-items:center;gap:10px;margin-top:12px;}
+    .runout-date{font-size:14px;font-weight:700;color:var(--text);}
+    .runout-sub{font-size:12px;color:var(--text3);margin-top:2px;}
+
+    /* Quick reading card */
+    .quick-card{background:var(--surface);border-radius:var(--radius);padding:16px 18px 14px;margin-bottom:12px;box-shadow:var(--shadow);}
+    .quick-label{font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--text3);margin-bottom:10px;}
+    .quick-input-row{display:flex;align-items:center;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;transition:border-color 0.15s,box-shadow 0.15s;}
+    .quick-input-row:focus-within{border-color:var(--purple);box-shadow:0 0 0 3px rgba(123,110,246,0.12);}
+    .quick-pound{font-size:20px;font-weight:700;color:var(--text2);padding:0 4px 0 14px;flex-shrink:0;}
+    .quick-input-row input{flex:1;border:none;background:transparent;outline:none;font-size:22px;font-weight:700;color:var(--text);padding:13px 10px;font-family:inherit;-webkit-appearance:none;min-width:0;}
+    .quick-input-row input::placeholder{color:var(--text3);font-weight:500;font-size:18px;}
+    .quick-save-btn{background:var(--grad);border:none;color:#fff;font-family:inherit;font-size:14px;font-weight:700;padding:0 20px;cursor:pointer;height:54px;flex-shrink:0;transition:opacity 0.15s;}
+    .quick-save-btn:active{opacity:0.85;}
+    .quick-meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
+    .quick-meta span{font-size:12px;color:var(--text3);}
+    .quick-adjust-btn{background:none;border:none;color:var(--purple);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0;}
+    .quick-dt-row{max-height:0;overflow:hidden;transition:max-height 0.2s ease;}
+    .quick-dt-row.open{max-height:60px;}
+    .quick-dt-input{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:9px 12px;font-size:14px;font-family:inherit;outline:none;margin-top:8px;}
+    .quick-warn{font-size:12px;color:var(--amber-text);font-weight:600;background:#F5A62315;border-radius:6px;padding:6px 10px;margin-top:8px;display:none;}
+
+    /* Form fields */
+    .field{margin-bottom:12px;}
+    .field label{font-size:12px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.06em;display:block;margin-bottom:6px;}
+    .field input,.field select{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:11px 14px;font-size:14px;font-family:inherit;font-weight:500;outline:none;transition:border-color 0.15s;-webkit-appearance:none;}
+    .field input:focus,.field select:focus{border-color:var(--purple);}
+    input[type="datetime-local"]::-webkit-calendar-picker-indicator{opacity:0.4;}
+    .field-error{font-size:12px;color:var(--red-text);margin-top:5px;font-weight:600;display:none;}
+    .field-warn{font-size:12px;color:var(--amber-text);margin-top:5px;font-weight:600;display:none;background:#F5A62315;border-radius:6px;padding:5px 8px;}
+
+    /* Buttons */
+    .btn-primary{width:100%;background:var(--grad);border:none;border-radius:var(--radius-pill);color:#fff;font-family:inherit;font-size:14px;font-weight:700;padding:14px;cursor:pointer;box-shadow:0 4px 16px rgba(123,110,246,0.3);transition:opacity 0.15s;}
+    .btn-primary:active{opacity:0.88;}
+    .btn-primary.green-grad{background:linear-gradient(135deg,#4ECFA8,#2DB8A0);box-shadow:0 4px 16px rgba(78,207,168,0.3);}
+    .btn-ghost{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-pill);color:var(--text2);font-family:inherit;font-size:13px;font-weight:600;padding:10px 20px;cursor:pointer;}
+    .btn-danger{background:#FEEAEA;border:none;border-radius:var(--radius-pill);color:var(--red-text);font-family:inherit;font-size:13px;font-weight:700;padding:10px 20px;cursor:pointer;}
+    .dark .btn-danger{background:#2E1A1A;}
+    .btn-xs{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);color:var(--text2);font-family:inherit;font-size:12px;font-weight:600;padding:4px 10px;cursor:pointer;}
+    .btn-xs.del{color:var(--red-text);border-color:#F06A6A33;background:#FEEAEA44;}
+    .dark .btn-xs.del{background:#2E1A1A55;}
+    .btn-show-more{background:none;border:none;color:var(--purple);font-family:inherit;font-size:12px;font-weight:600;padding:10px 0 2px;cursor:pointer;display:block;width:100%;text-align:center;}
+    .btn-cancel{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-pill);color:var(--text2);font-family:inherit;font-size:13px;font-weight:600;padding:10px;cursor:pointer;}
+    .btn-save{flex:1;background:var(--grad);border:none;border-radius:var(--radius-pill);color:#fff;font-family:inherit;font-size:13px;font-weight:700;padding:10px;cursor:pointer;}
+
+    /* Chart */
+    .chart-wrap{width:100%;overflow-x:auto;}
+    svg.chart{display:block;}
+    .chart-empty{font-size:12px;color:var(--text3);text-align:center;padding:24px 0;}
+    .chart-legend{font-size:12px;color:var(--text3);margin-top:8px;display:flex;gap:14px;flex-wrap:wrap;}
+    .legend-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle;}
+
+    /* Monthly table */
+    .month-table{width:100%;border-collapse:collapse;font-size:13px;}
+    .month-table th{font-size:12px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;text-align:left;padding:0 0 10px;}
+    .month-table th:not(:first-child){text-align:right;}
+    .month-table td{padding:9px 0;border-top:1px solid var(--border);color:var(--text);font-weight:500;}
+    .month-table td:not(:first-child){text-align:right;}
+    .month-table td:nth-child(2){color:var(--purple);font-weight:700;}
+    .month-table td:nth-child(3){color:var(--green-text);font-weight:700;}
+
+    /* History entries */
+    .entry-row{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);}
+    .entry-row:last-of-type{border-bottom:none;}
+    .entry-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-right:12px;}
+    .entry-icon.reading{background:#EEF0FF;}
+    .entry-icon.topup{background:#E6FBF5;}
+    .dark .entry-icon.reading{background:#252640;}
+    .dark .entry-icon.topup{background:#1A2E28;}
+    .entry-body{flex:1;min-width:0;}
+    .entry-main{font-size:14px;font-weight:700;color:var(--text);}
+    .entry-sub{font-size:12px;color:var(--text3);margin-top:2px;}
+    .entry-actions{display:flex;gap:6px;flex-shrink:0;}
+    .spend-annotation{display:flex;align-items:center;gap:8px;padding:2px 0 2px 48px;}
+    .spend-line{flex:1;height:1px;background:var(--border);}
+    .spend-val{font-size:12px;color:var(--text3);white-space:nowrap;font-weight:500;}
+
+    /* Edit form */
+    .edit-card{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:2px;}
+    .edit-btns{display:flex;gap:10px;margin-top:12px;}
+
+    /* Settings */
+    .settings-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);}
+    .settings-row:last-child{border-bottom:none;}
+    .settings-label{font-size:13px;font-weight:600;color:var(--text);}
+    .settings-sub{font-size:12px;color:var(--text3);margin-top:2px;}
+    .settings-input{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:7px 10px;font-size:13px;font-family:inherit;font-weight:600;outline:none;width:90px;text-align:right;}
+    .settings-input:focus{border-color:var(--purple);}
+    .btn-setting{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-pill);color:var(--text2);font-family:inherit;font-size:12px;font-weight:600;padding:7px 14px;cursor:pointer;}
+    .btn-setting.danger{color:var(--red-text);border-color:#F06A6A55;background:#FEEAEA44;}
+    .dark .btn-setting.danger{background:#2E1A1A55;}
+    input[type="file"]{display:none;}
+
+    /* Gear section titles */
+    .gear-section-title{font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--text3);margin:22px 0 8px;padding:0 2px;}
+    .gear-section-title:first-child{margin-top:4px;}
+
+    /* Bottom nav */
+    .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0 14px;z-index:100;box-shadow:0 -8px 24px rgba(0,0,0,0.08);max-width:480px;margin:0 auto;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+    .nav-btn{background:none;border:none;color:var(--text3);font-family:inherit;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:2px 0;flex:1;transition:color 0.15s;}
+    .nav-icon{font-size:22px;line-height:1;transition:transform 0.15s;}
+    .nav-btn.active{color:var(--purple);}
+    .nav-btn.active .nav-icon{transform:scale(1.15);}
+
+    /* Bottom sheet */
+    .sheet-bg{display:none;position:fixed;inset:0;background:rgba(10,10,30,0.55);z-index:300;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+    .sheet-bg.open{display:flex;}
+    .sheet{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;padding:24px 20px 36px;width:100%;max-width:480px;box-shadow:0 -8px 40px rgba(0,0,0,0.15);animation:slideUp 0.25s ease;}
+    @keyframes slideUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+    .sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px;}
+    .sheet h3{font-size:17px;font-weight:800;color:var(--text);margin-bottom:6px;}
+    .sheet p{font-size:13px;color:var(--text2);margin-bottom:18px;line-height:1.5;}
+    .sheet-btns{display:flex;flex-direction:column;gap:10px;}
+
+    /* §7.3 — save confirmation toast. Sits above the nav bar (z-index
+       between it and the sheet/modal layer, since an open sheet/modal
+       already has the user's attention and shouldn't be upstaged by a
+       toast underneath it). Auto-dismisses; Undo removes the entry that
+       was just saved, addressing the doc's specific concern that a typo
+       here silently corrupts the interpolation for every surrounding day
+       — undo matters more here than in a typical form. */
+    .toast{
+      display:none; position:fixed; left:50%; bottom:78px; transform:translateX(-50%) translateY(0);
+      background:var(--text); color:var(--surface); border-radius:var(--radius-pill);
+      padding:12px 8px 12px 18px; box-shadow:0 8px 24px rgba(0,0,0,0.25);
+      z-index:150; align-items:center; gap:14px; max-width:calc(100% - 32px);
+      font-size:14px; font-weight:600; animation:toastIn 0.2s ease;
+    }
+    .toast.open{display:flex;}
+    @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
+    .toast #toast-undo-btn{
+      background:rgba(255,255,255,0.15); border:none; color:var(--surface);
+      font-family:inherit; font-size:13px; font-weight:700; border-radius:var(--radius-pill);
+      padding:7px 14px; cursor:pointer; flex-shrink:0;
+    }
+    .dark .toast{background:var(--surface2); color:var(--text); box-shadow:0 8px 24px rgba(0,0,0,0.5);}
+    .dark .toast #toast-undo-btn{background:rgba(123,110,246,0.25); color:var(--purple);}
+    @media (prefers-reduced-motion: reduce) { .toast { animation:none; } }
+
+    /* Modal */
+    .modal-bg{display:none;position:fixed;inset:0;background:rgba(10,10,30,0.55);z-index:400;align-items:flex-end;justify-content:center;backdrop-filter:blur(4px);}
+    .modal-bg.open{display:flex;}
+    .modal{background:var(--surface);border-radius:var(--radius) var(--radius) 0 0;padding:24px 20px 36px;width:100%;max-width:480px;box-shadow:0 -8px 40px rgba(0,0,0,0.15);}
+    .modal-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 18px;}
+    .modal h3{font-size:17px;font-weight:800;color:var(--text);margin-bottom:8px;}
+    .modal p{font-size:13px;color:var(--text2);margin-bottom:20px;line-height:1.5;}
+    .modal-btns{display:flex;gap:10px;}
+    .modal-btns .btn-ghost,.modal-btns .btn-danger{flex:1;text-align:center;}
+
+    /* Misc */
+    .empty-state{text-align:center;padding:40px 20px;}
+    .empty-icon{font-size:44px;margin-bottom:12px;}
+    .empty-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;}
+    .empty-sub{font-size:12px;color:var(--text3);}
+    .pill{display:inline-block;border-radius:var(--radius-pill);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:3px 10px;}
+    .pill-purple{background:#EEF0FF;color:var(--purple);}
+    .pill-green{background:#E6FBF5;color:var(--green-text);}
+    .dark .pill-purple{background:#252640;color:#A89EFF;}
+    .dark .pill-green{background:#1A2E28;color:#4ECFA8;}
+    .info-list{list-style:none;}
+    .info-list li{font-size:12px;color:var(--text2);padding:6px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;}
+    .info-list li:last-child{border-bottom:none;}
+    .info-list li::before{content:'\2713';color:var(--green-text);font-weight:700;}
+    .version-tag{text-align:center;font-size:12px;color:var(--text3);padding:8px 0 2px;letter-spacing:0.06em;}
+    .sc-badge{display:inline-block;font-size:12px;font-weight:700;background:#F5A62322;color:var(--amber-text);border-radius:4px;padding:1px 5px;margin-left:4px;}
+    .trend{font-size:12px;font-weight:600;}
+    .trend.up{color:var(--red-text);}
+    .trend.down{color:var(--green-text);}
+    .trend.flat{color:var(--text3);}
+
+    /* §8 — reduced motion. Three spatial-motion effects ran unconditionally:
+       the page fade-and-slide-up on every tab switch, the bottom-sheet
+       slide-up, and the nav icon scale bounce on the active tab. None are
+       essential to understanding what changed — each is purely a transition
+       polish — so all three are disabled outright for anyone who has asked
+       the OS to reduce motion, rather than just made faster (a common but
+       insufficient middle ground for users who experience actual vestibular
+       discomfort, not just impatience). Colour transitions elsewhere (e.g.
+       the urgency header) are left alone — they carry no spatial motion. */
+    @media (prefers-reduced-motion: reduce) {
+      .page.active { animation: none; }
+      .sheet { animation: none; }
+      .nav-icon { transition: none; }
+      .nav-btn.active .nav-icon { transform: none; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- METER PAGE -->
+  <div class="page active" id="page-meter">
+    <div class="page-header" id="meter-header">
+      <div id="meter-header-sparkline"></div>
+      <div class="page-header-row">
+        <div style="flex:1">
+          <div class="page-eyebrow" id="meter-eyebrow">Electric Meter</div>
+          <div class="page-title">Meter</div>
+          <div id="meter-page-sub" style="font-size:12px;color:rgba(255,255,255,0.65);margin-top:3px;font-weight:500"></div>
+          <div class="fuel-toggle">
+            <button id="fuel-elec" class="fuel-btn active" onclick="switchFuel('electricity')"><svg viewBox="0 0 20 20" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.15em"><path d="M11 1 3.5 11.5h4.8L8 19l8.5-11.5h-4.8L11 1Z"/></svg> Electricity</button>
+            <button id="fuel-gas" class="fuel-btn" onclick="switchFuel('gas')"><svg viewBox="0 0 20 20" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.15em"><path d="M10 1c1 3-2.5 4-2.5 7.2A2.5 2.5 0 0 0 10 10.7a2 2 0 0 0 2-2c1.8 1.3 3 3.4 3 5.6A5 5 0 0 1 5 14.3C5 9 10 8 10 1Z"/></svg> Gas</button>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="hdr-btn" onclick="toggleTheme()" id="theme-btn" aria-label="Switch to dark theme"><svg viewBox="0 0 20 20" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.15em"><path d="M14.5 12.7A6.7 6.7 0 0 1 7.3 5.5c0-.7.1-1.4.3-2A7.2 7.2 0 1 0 16.5 12.4c-.6.2-1.3.3-2 .3Z"/></svg></button>
+        </div>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="quick-card">
+        <div class="quick-label" id="quick-label">Electricity meter balance</div>
+        <div class="quick-input-row">
+          <div class="quick-pound">&#163;</div>
+          <input type="text" inputmode="decimal" id="q-amt" placeholder="0.00" onkeydown="if(event.key==='Enter')quickSave()" />
+          <button class="quick-save-btn" onclick="quickSave()">Save</button>
+        </div>
+        <div class="quick-meta">
+          <span id="q-ts"></span>
+          <button id="q-adjust-btn" class="quick-adjust-btn" onclick="toggleAdjustTime()">Adjust time &#9662;</button>
+        </div>
+        <div id="q-dt-row" class="quick-dt-row">
+          <input type="datetime-local" id="q-dt" class="quick-dt-input" />
+        </div>
+        <div id="q-datewarn" class="quick-warn"><svg viewBox="0 0 20 20" width="0.85em" height="0.85em" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.1em"><path d="M10 2.5 18 16.5H2L10 2.5Z"/><path d="M10 8v3.4"/><circle cx="10" cy="13.8" r="0.15" fill="currentColor" stroke="none"/></svg> Earlier than your last entry &#8212; check the date.</div>
+      </div>
+      <div id="meter-alert" aria-live="assertive"></div>
+      <div id="meter-stats" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- INSIGHTS PAGE -->
+  <div class="page" id="page-insights">
+    <div class="page-header">
+      <div class="page-header-row">
+        <div><div class="page-eyebrow">Electric Meter</div><div class="page-title">Insights</div></div>
+      </div>
+    </div>
+    <div class="page-body">
+      <div class="period-row" id="insights-periods"></div>
+      <div class="card" id="insights-summary"></div>
+      <div class="card" id="insights-moved-stats"></div>
+      <div class="card">
+        <div class="card-title">Daily usage</div>
+        <div class="card-sub" id="insights-daily-sub">Estimated spend per day</div>
+        <div id="chart-daily"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">7-day rolling average</div>
+        <div class="card-sub">Smoothed daily cost &#8212; is usage trending up or down?</div>
+        <div id="chart-rolling"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Monthly summary</div>
+        <div id="monthly-table"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- NAV -->
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-meter" onclick="showPage('meter')"><span class="nav-icon"><svg viewBox="0 0 20 20" width="1em" height="1em" fill="currentColor"><path d="M11 1 3.5 11.5h4.8L8 19l8.5-11.5h-4.8L11 1Z"/></svg></span>Meter</button>
+  <button class="nav-btn" id="nav-history" onclick="showPage('history')"><span class="nav-icon"><svg viewBox="0 0 20 20" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="4.5" y="3.5" width="11" height="14" rx="1.5"/><path d="M7.5 3.5V2.8A1.3 1.3 0 0 1 8.8 1.5h2.4a1.3 1.3 0 0 1 1.3 1.3v.7"/><path d="M7 9h6M7 12.5h6"/></svg></span>History</button>
+  <button class="nav-btn" id="nav-insights" onclick="showPage('insights')"><span class="nav-icon"><svg viewBox="0 0 20 20" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 15V9M10 15V5M16 15v-7"/></svg></span>Insights</button>
+  <button class="nav-btn" id="nav-settings" onclick="showPage('settings')"><span class="nav-icon"><svg viewBox="0 0 20 20" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v2.1M10 15.4v2.1M17.5 10h-2.1M4.6 10H2.5M15.1 4.9l-1.5 1.5M6.4 13.6l-1.5 1.5M15.1 15.1l-1.5-1.5M6.4 6.4 4.9 4.9" stroke-linecap="round"/></svg></span>Settings</button>
+</nav>
+
+<!-- GEAR OVERLAY -->
+<div class="page" id="page-history">
+  <div class="page-header">
+    <div class="page-header-row">
+      <div><div class="page-eyebrow" id="history-eyebrow">Electric Meter</div><div class="page-title">History</div></div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="gear-section-title">Reading history</div>
+    <div class="card" id="history-list"></div>
+
+    <div class="gear-section-title">Log a top-up manually</div>
+    <div class="card">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.5">Use this to backdate a top-up or add one that was not auto-detected.</div>
+      <div class="field"><label>Date &amp; time</label><input type="datetime-local" id="tu-dt" /></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="field" style="margin-bottom:0"><label>Amount added (&#163;)</label><input type="number" id="tu-added" min="0" step="0.01" placeholder="50.00" /></div>
+        <div class="field" style="margin-bottom:0"><label>Balance after (&#163;)</label><input type="number" id="tu-after" min="0" step="0.01" placeholder="52.46" /></div>
+      </div>
+      <div class="field-error" id="tu-err" style="margin-top:8px"></div>
+      <button class="btn-primary green-grad" style="margin-top:14px" onclick="submitManualTopup()">Save top-up</button>
+    </div>
+  </div>
+</div>
+
+<div class="page" id="page-settings">
+  <div class="page-header">
+    <div class="page-header-row">
+      <div><div class="page-eyebrow" id="settings-eyebrow">Electric Meter</div><div class="page-title">Settings</div></div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="gear-section-title">Settings</div>
+    <div class="card">
+      <div class="settings-row">
+        <div><div class="settings-label">Low balance warning (&#163;)</div><div class="settings-sub" id="set-lowbal-sub">Alert when balance drops below this</div></div>
+        <input class="settings-input" type="number" id="set-lowbal" min="0" step="0.5" onchange="saveSetting('lowBalance',this.value)" placeholder="10" />
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Top-up reminder (days)</div><div class="settings-sub">Warn when this many days left</div></div>
+        <input class="settings-input" type="number" id="set-topupremind" min="1" step="1" onchange="saveSetting('topupRemind',this.value)" placeholder="5" />
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Top-up planner buffer (%)</div><div class="settings-sub">Safety margin added on top of the bare minimum</div></div>
+        <input class="settings-input" type="number" id="set-topupbuffer" min="0" step="1" onchange="saveSetting('topupBuffer',this.value)" placeholder="10" />
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Weekly standing charge (&#163;)</div><div class="settings-sub" id="set-standing-sub">Fixed daily charge expressed weekly</div></div>
+        <input class="settings-input" type="number" id="set-standing" min="0" step="0.01" onchange="saveSetting('standingCharge',this.value)" placeholder="0.00" />
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Tariff rate (p/kWh)</div><div class="settings-sub">Optional &#8212; for energy estimate</div></div>
+        <input class="settings-input" type="number" id="set-tariff" min="0" step="0.1" onchange="saveSetting('tariff',this.value)" />
+      </div>
+    </div>
+
+    <div class="gear-section-title">Data</div>
+    <div class="card">
+      <div class="settings-row">
+        <div><div class="settings-label">Export to CSV</div><div class="settings-sub">Download all readings</div></div>
+        <button class="btn-setting" onclick="exportCSV()">Export</button>
+      </div>
+      <div class="settings-row">
+        <div><div class="settings-label">Import from CSV</div><div class="settings-sub">Restore from exported file</div></div>
+        <button class="btn-setting" onclick="var fi=document.getElementById('csv-import');fi.value='';fi.click()">Import</button>
+      </div>
+
+      <div class="settings-row">
+        <div><div class="settings-label">Reset data</div><div class="settings-sub" id="reset-sub">Delete all readings for this meter</div></div>
+        <button class="btn-setting danger" onclick="openModal('Reset data','Delete all readings for this meter? This cannot be undone.',doReset)">Reset</button>
+      </div>
+    </div>
+
+    <div class="gear-section-title">About</div>
+    <div class="card">
+      <ul class="info-list">
+        <li>Add to Home Screen once, then works fully offline</li>
+        <li>Data stored only on this device</li>
+        <li>Nothing sent to any server</li>
+        <li>ACE9000 prepayment meter (British Gas)</li>
+      </ul>
+    </div>
+    <div class="version-tag">v3.5 &#183; ACE9000 &#183; British Gas</div>
+  </div>
+</div>
+
+<!-- TOP-UP SHEET -->
+<div class="sheet-bg" id="topup-sheet-bg">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3 id="ts-title">Did you top up?</h3>
+    <p id="ts-msg">Your balance went up &#8212; looks like you may have topped up. How much did you add?</p>
+    <div class="field"><label>Amount added (&#163;)</label><input type="number" id="ts-added" min="0" step="0.01" placeholder="e.g. 50.00" /></div>
+    <div class="sheet-btns">
+      <button class="btn-primary green-grad" onclick="confirmTopup()">Yes, log top-up</button>
+      <button class="btn-ghost" onclick="dismissTopupSheet()" style="width:100%;text-align:center;margin-top:2px">No, just a correction</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOP-UP PLANNER — §6.1 -->
+<div class="sheet-bg" id="planner-sheet-bg">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>Plan a top-up</h3>
+    <p id="planner-rate-note" style="margin-bottom:20px"></p>
+
+    <div class="planner-block">
+      <label class="planner-label">Make it last until</label>
+      <input type="date" id="planner-date" class="planner-date-input" oninput="plannerDateChanged()" />
+      <div class="planner-result" id="planner-date-result"></div>
+    </div>
+
+    <hr class="divider" style="margin:18px 0">
+
+    <div class="planner-block">
+      <label class="planner-label">If I add</label>
+      <div class="planner-amount-row">
+        <span class="planner-pound">&#163;</span>
+        <input type="number" id="planner-amount" min="0" step="0.01" placeholder="50.00" oninput="plannerAmountChanged()" />
+      </div>
+      <div class="planner-result" id="planner-amount-result"></div>
+    </div>
+
+    <button class="btn-primary green-grad" onclick="exportReminder()" style="margin-top:20px">Add reminder to calendar</button>
+    <button class="btn-ghost" onclick="closePlanner()" style="width:100%;text-align:center;margin-top:10px">Close</button>
+  </div>
+</div>
+
+<!-- DEBT RECONCILIATION — §6.2 -->
+<div class="sheet-bg" id="debt-sheet-bg">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <h3>Some of this went to debt</h3>
+    <p id="debt-sheet-msg">Your top-up doesn&#8217;t fully match the balance shown &#8212; some of it likely paid off emergency credit while the meter was off-supply.</p>
+    <div class="field"><label>Amount that went to debt (&#163;)</label><input type="number" id="debt-amount" min="0" step="0.01" /></div>
+    <div class="sheet-btns">
+      <button class="btn-primary green-grad" onclick="confirmDebtRecovered()">Yes, that&#8217;s right</button>
+      <button class="btn-ghost" onclick="dismissDebtSheet()" style="width:100%;text-align:center;margin-top:2px">No, it was all electricity</button>
+    </div>
+  </div>
+</div>
+
+<!-- SAVE TOAST — §7.3 -->
+<div class="toast" id="save-toast" role="status" aria-live="polite">
+  <span id="toast-msg"></span>
+  <button id="toast-undo-btn" onclick="undoLastSave()">Undo</button>
+</div>
+
+<!-- MODAL -->
+<div class="modal-bg" id="modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h3 id="modal-title"></h3>
+    <p id="modal-msg"></p>
+    <div class="modal-btns">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-danger" id="modal-ok">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── §7.5 — IndexedDB backup mirror ────────────────────────
+// localStorage remains the app's primary, synchronous store — every one
+// of the ~31 existing loadEntries/saveEntries/loadSettings/saveSettings
+// call sites is untouched, avoiding a risky async rewrite across the
+// whole render/save pipeline. IndexedDB is used as a passive, best-effort
+// background copy: every save also mirrors to it, and at startup, if
+// localStorage is unexpectedly empty but the mirror has data, the app
+// offers to restore from it.
+//
+// This is a narrower claim than "migrate to IndexedDB" because research
+// while building this surfaced that Safari's ITP enforces a 7-day cap on
+// ALL script-writable storage (localStorage and IndexedDB alike) after a
+// period with no user interaction on the site — the single most likely
+// real trigger for a meter-reading app checked every few days, and
+// changing which storage API is used does not fix that specific cause.
+// The passive backup-reminder nudge below is what actually protects
+// against that scenario, since it gets data out of the browser into a
+// file the user controls, independent of any storage engine's behaviour.
+const IDB_NAME = 'meter-backup';
+const IDB_VERSION = 1;
+const IDB_STORE = 'kv';
+let idbHandle = null;
+let idbAvailable = true;
+
+function idbOpen() {
+  return new Promise((resolve, reject) => {
+    if (!('indexedDB' in window)) { reject(new Error('IndexedDB not available')); return; }
+    const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) db.createObjectStore(IDB_STORE);
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function idbGetHandle() {
+  if (!idbAvailable) return null;
+  if (idbHandle) return idbHandle;
+  try {
+    idbHandle = await idbOpen();
+    return idbHandle;
+  } catch (err) {
+    idbAvailable = false; // don't keep retrying a broken/unavailable IndexedDB every save
+    return null;
+  }
+}
+
+async function idbSet(key, value) {
+  const db = await idbGetHandle();
+  if (!db) return; // best-effort only — localStorage already has the real copy
+  try {
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readwrite');
+      tx.objectStore(IDB_STORE).put(value, key);
+      tx.oncomplete = resolve;
+      tx.onerror = () => reject(tx.error);
+    });
+  } catch (err) { /* mirror failed silently — not the source of truth, nothing to surface */ }
+}
+
+async function idbGet(key) {
+  const db = await idbGetHandle();
+  if (!db) return undefined;
+  try {
+    return await new Promise((resolve, reject) => {
+      const tx = db.transaction(IDB_STORE, 'readonly');
+      const req = tx.objectStore(IDB_STORE).get(key);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  } catch (err) { return undefined; }
+}
+
+// ── Storage — fuel-aware ──────────────────────────────────
+function entriesKey() { return 'meter-entries-' + activeFuel; }
+function settingsKey() { return 'meter-settings-' + activeFuel; }
+function loadEntries() { try { return JSON.parse(localStorage.getItem(entriesKey()) || '[]'); } catch { return []; } }
+function saveEntries(e) {
+  localStorage.setItem(entriesKey(), JSON.stringify(e));
+  idbSet(entriesKey(), e); // fire-and-forget background mirror
+}
+function loadSettings() { try { return JSON.parse(localStorage.getItem(settingsKey()) || '{}'); } catch { return {}; } }
+function saveSettings(s) {
+  localStorage.setItem(settingsKey(), JSON.stringify(s));
+  idbSet(settingsKey(), s); // fire-and-forget background mirror
+}
+function saveSetting(k, v) {
+  const s = loadSettings();
+  s[k] = parseFloat(v) || 0;
+  saveSettings(s);
+}
+
+// ── Icons (§5.3) ──────────────────────────────────────────
+// Hand-authored inline SVG replacing the nine emoji the app used to rely
+// on for its icon system (lightning, flame, bar-chart, gear, three
+// traffic-light dots, warning triangle, sun, moon). Emoji render
+// differently across OS/font versions, can't be recoloured to match the
+// urgency-tinted header from §5.1 or dark mode, sit on inconsistent
+// baselines against text, and are read aloud verbosely by screen readers.
+// All paths use stroke/fill="currentColor" so they inherit whatever
+// colour context they sit in — critical for the header, which now
+// changes colour with urgency and shouldn't carry a fixed-colour icon.
+//
+// The three traffic-light circles consolidate into one dot shape whose
+// *colour* communicates state via currentColor, matching the doc's own
+// critique that they duplicated information the banner background
+// already carried — one shape, not three.
+const ICONS = {
+  bolt: '<svg viewBox="0 0 20 20" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.15em"><path d="M11 1 3.5 11.5h4.8L8 19l8.5-11.5h-4.8L11 1Z"/></svg>',
+  flame: '<svg viewBox="0 0 20 20" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.15em"><path d="M10 1c1 3-2.5 4-2.5 7.2A2.5 2.5 0 0 0 10 10.7a2 2 0 0 0 2-2c1.8 1.3 3 3.4 3 5.6A5 5 0 0 1 5 14.3C5 9 10 8 10 1Z"/></svg>',
+  chart: '<svg viewBox="0 0 20 20" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="vertical-align:-0.15em"><path d="M4 15V9M10 15V5M16 15v-7"/></svg>',
+  gear: '<svg viewBox="0 0 20 20" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.5" style="vertical-align:-0.15em"><circle cx="10" cy="10" r="2.6"/><path d="M10 2.5v2.1M10 15.4v2.1M17.5 10h-2.1M4.6 10H2.5M15.1 4.9l-1.5 1.5M6.4 13.6l-1.5 1.5M15.1 15.1l-1.5-1.5M6.4 6.4 4.9 4.9" stroke-linecap="round"/></svg>',
+  dot: '<svg viewBox="0 0 20 20" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.1em"><circle cx="10" cy="10" r="7"/></svg>',
+  warning: '<svg viewBox="0 0 20 20" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.15em"><path d="M10 2.5 18 16.5H2L10 2.5Z"/><path d="M10 8v3.4"/><circle cx="10" cy="13.8" r="0.15" fill="currentColor" stroke="none"/></svg>',
+  sun: '<svg viewBox="0 0 20 20" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" style="vertical-align:-0.15em"><circle cx="10" cy="10" r="3.4"/><path d="M10 1.8v2M10 16.2v2M18.2 10h-2M3.8 10h-2M15.6 4.4l-1.4 1.4M5.8 14.2l-1.4 1.4M15.6 15.6l-1.4-1.4M5.8 5.8 4.4 4.4"/></svg>',
+  moon: '<svg viewBox="0 0 20 20" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.15em"><path d="M14.5 12.7A6.7 6.7 0 0 1 7.3 5.5c0-.7.1-1.4.3-2A7.2 7.2 0 1 0 16.5 12.4c-.6.2-1.3.3-2 .3Z"/></svg>',
+  clipboard: '<svg viewBox="0 0 20 20" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.15em"><rect x="4.5" y="3.5" width="11" height="14" rx="1.5"/><path d="M7.5 3.5V2.8A1.3 1.3 0 0 1 8.8 1.5h2.4a1.3 1.3 0 0 1 1.3 1.3v.7"/><path d="M7 9h6M7 12.5h6"/></svg>',
+  plug: '<svg viewBox="0 0 20 20" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.15em"><path d="M7 2v4M13 2v4M5.5 6h9v3.5a4.5 4.5 0 0 1-9 0V6Z"/><path d="M10 13.5V18"/></svg>',
+  calendar: '<svg viewBox="0 0 20 20" width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.15em"><rect x="3" y="4" width="14" height="13" rx="1.5"/><path d="M3 8h14M7 2.5v3M13 2.5v3"/></svg>',
+};
+function icon(name) { return ICONS[name] || ''; }
+
+// ── Date helpers ──────────────────────────────────────────
+function parseLocal(str) {
+  const d = new Date(str);
+  if (!isNaN(d)) return d;
+  const [dp, tp] = str.split('T');
+  const [y, mo, day] = dp.split('-').map(Number);
+  const [h, m] = tp.split(':').map(Number);
+  return new Date(y, mo-1, day, h, m);
+}
+function fmt(date) { return date.toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
+function fmtDay(date) { return date.toLocaleDateString('en-GB',{day:'numeric',month:'short'}); }
+function toInputVal(date) {
+  const pad = n => String(n).padStart(2,'0');
+  return date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate())+'T'+pad(date.getHours())+':'+pad(date.getMinutes());
+}
+function monthKey(date) { return date.getFullYear()+'-'+String(date.getMonth()+1).padStart(2,'0'); }
+function monthLabel(key) { const [y,m]=key.split('-'); return new Date(+y,+m-1,1).toLocaleString('en-GB',{month:'short',year:'numeric'}); }
+function dayKey(date) { const pad=n=>String(n).padStart(2,'0'); return date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate()); }
+function startOfDay(date) { return new Date(date.getFullYear(),date.getMonth(),date.getDate()); }
+
+// ── Daily usage interpolation ─────────────────────────────
+function calcDailyUsage(entries) {
+  const sorted = [...entries].filter(e => e.balance != null).sort((a,b) => parseLocal(a.datetime)-parseLocal(b.datetime));
+  if (sorted.length < 2) return [];
+  const days = {};
+  // Seed every day in the covered range with 0 so flat days read as
+  // zero rather than vanishing from the series (and from the averages).
+  {
+    const firstMs = parseLocal(sorted[0].datetime).getTime();
+    const lastMs = parseLocal(sorted[sorted.length-1].datetime).getTime();
+    let cur = startOfDay(new Date(firstMs));
+    while (cur.getTime() < lastMs) {
+      days[dayKey(cur)] = 0;
+      cur = new Date(cur.getTime() + 86400000);
+    }
+  }
+  function spreadSpend(spent, startMs, endMs) {
+    if (spent <= 0 || endMs <= startMs) return;
+    const totalMs = endMs - startMs;
+    let cursor = startOfDay(new Date(startMs));
+    while (cursor.getTime() < endMs) {
+      const dayStart = Math.max(cursor.getTime(), startMs);
+      const dayEnd = Math.min(cursor.getTime() + 86400000, endMs);
+      const frac = (dayEnd - dayStart) / totalMs;
+      const k = dayKey(cursor);
+      days[k] = (days[k] || 0) + spent * frac;
+      cursor = new Date(cursor.getTime() + 86400000);
+    }
+  }
+  for (let i = 1; i < sorted.length; i++) {
+    const prev = sorted[i-1], curr = sorted[i];
+    const pb = parseFloat(prev.balance), cb = parseFloat(curr.balance);
+    const startMs = parseLocal(prev.datetime).getTime();
+    const endMs = parseLocal(curr.datetime).getTime();
+    if (endMs <= startMs) continue;
+    if (cb < pb) {
+      spreadSpend(pb - cb, startMs, endMs);
+    } else if (curr.type === 'topup' && curr.added != null) {
+      // §6.2 — a confirmed debtRecovered amount is money that paid off
+      // emergency credit / accrued standing charge while off-supply, not
+      // electricity used in the days before the top-up. Strip it out
+      // before spreading the remainder as ordinary usage, or a single
+      // lump gets smeared across the pre-topup window as a huge fake
+      // usage spike (exactly the bug in the owner's real 19/06, 20/07,
+      // and 28/08 entries).
+      const debtRecovered = curr.debtRecovered != null ? parseFloat(curr.debtRecovered) : 0;
+      const drained = pb + parseFloat(curr.added) - cb - debtRecovered;
+      spreadSpend(drained, startMs, endMs);
+    }
+  }
+  // Standing charge. `gross` is what actually drained off the meter and is
+  // what the run-out forecast must use. `value` strips the standing charge
+  // out to give electricity-only usage, for the charts.
+  //
+  // The deduction carries a running deficit rather than being clamped per
+  // day, so a quiet day can't silently swallow part of the standing charge
+  // and leave the totals failing to reconcile against the real balance.
+  const s = loadSettings();
+  const sc = parseFloat(s.standingCharge) || 0;
+  const dailySC = sc > 0 ? sc / 7 : 0;
+  let carry = 0;
+  return Object.keys(days).sort().map(k => {
+    const gross = days[k];
+    let value = gross;
+    if (dailySC > 0) {
+      const owed = dailySC + carry;
+      value = gross - owed;
+      if (value < 0) { carry = -value; value = 0; } else { carry = 0; }
+    }
+    return { key: k, date: new Date(k), value: value, gross: gross };
+  });
+}
+
+// ── Stats calculation ─────────────────────────────────────
+function calcStats(entries, period) {
+  const daily = calcDailyUsage(entries);
+  if (!daily.length) return null;
+  const settings = loadSettings();
+  const withBal = [...entries].filter(e => e.balance != null).sort((a,b) => parseLocal(a.datetime)-parseLocal(b.datetime));
+  if (!withBal.length) return null;
+  const lastEntry = withBal[withBal.length-1];
+  const lastDate = parseLocal(lastEntry.datetime);
+  const effectiveNow = lastDate;
+
+  let cutoffMs;
+  if (period === '24h') cutoffMs = effectiveNow.getTime() - 86400000;
+  else if (period === '7d') cutoffMs = effectiveNow.getTime() - 7*86400000;
+  else if (period === '30d') cutoffMs = effectiveNow.getTime() - 30*86400000;
+  else if (period === 'last-topup') {
+    const topups = entries.filter(e => e.type==='topup').sort((a,b) => parseLocal(b.datetime)-parseLocal(a.datetime));
+    cutoffMs = topups.length ? parseLocal(topups[0].datetime).getTime() : parseLocal(daily[0].key).getTime();
+  } else {
+    cutoffMs = parseLocal(daily[0].key).getTime();
+  }
+
+  const ceilingMs = effectiveNow.getTime();
+
+  // Sum a field across a time window, counting partial days proportionally.
+  function accumulate(fromMs, toMs, field) {
+    let spent = 0, days = 0;
+    for (let i = 0; i < daily.length; i++) {
+      const d = daily[i];
+      const dayStartMs = parseLocal(d.key).getTime();
+      const dayEndMs = dayStartMs + 86400000;
+      if (dayEndMs <= fromMs || dayStartMs >= toMs) continue;
+      const overlapStart = Math.max(dayStartMs, fromMs);
+      const overlapEnd = Math.min(dayEndMs, toMs);
+      if (overlapEnd <= overlapStart) continue;
+      const dayFrac = (overlapEnd - overlapStart) / 86400000;
+      spent += (d[field] || 0) * dayFrac;
+      days += dayFrac;
+    }
+    return { spent: spent, days: days };
+  }
+
+  const win = accumulate(cutoffMs, ceilingMs, 'value');
+  const totalSpent = win.spent, coveredDays = win.days;
+  if (totalSpent <= 0 || coveredDays <= 0) return null;
+
+  const perDay = totalSpent / coveredDays;
+  const perHour = perDay / 24;
+  const remaining = parseFloat(lastEntry.balance);
+  const totalTopup = entries.filter(e => e.type==='topup').reduce((s,e) => s+parseFloat(e.added||0), 0);
+
+  // ── Forecast ────────────────────────────────────────────
+  // Deliberately NOT derived from the selected period. The period pills
+  // change what you're looking at; they must not change how long the app
+  // thinks your money lasts. Forecast always uses a fixed 7-day window.
+  //
+  // And it uses `gross` — the total drain including standing charge — because
+  // that is what actually empties the meter. `value` is electricity-only and
+  // would over-predict how many days are left.
+  const FORECAST_DAYS = 7;
+  let fc = accumulate(ceilingMs - FORECAST_DAYS*86400000, ceilingMs, 'gross');
+  if (fc.spent <= 0 || fc.days <= 0) fc = accumulate(0, ceilingMs, 'gross'); // fall back to all data
+  const burnRate = (fc.spent > 0 && fc.days > 0) ? fc.spent / fc.days : perDay;
+  const daysLeft = remaining / burnRate;
+  const runOutDate = new Date(lastDate.getTime() + daysLeft * 86400000);
+
+  // Pessimistic bound: the heavier of the recent-week and recent-month rates,
+  // so the headline date can be reported with an honest "could be as early as".
+  const m = accumulate(ceilingMs - 30*86400000, ceilingMs, 'gross');
+  const monthRate = (m.spent > 0 && m.days > 0) ? m.spent / m.days : burnRate;
+  const worstRate = Math.max(burnRate, monthRate);
+  const daysLeftWorst = remaining / worstRate;
+  const runOutWorst = new Date(lastDate.getTime() + daysLeftWorst * 86400000);
+  const forecastSpread = Math.abs(daysLeft - daysLeftWorst) >= 1;
+
+  let trend = null;
+  const priorCutoffMs = cutoffMs - (ceilingMs - cutoffMs);
+  const prior = accumulate(priorCutoffMs, cutoffMs, 'value');
+  const priorSpent = prior.spent, priorDays = prior.days;
+  if (priorSpent > 0 && priorDays > 0) {
+    const priorPerDay = priorSpent / priorDays;
+    const pct = ((perDay - priorPerDay) / priorPerDay) * 100;
+    trend = { pct: Math.abs(pct).toFixed(0), dir: pct > 5 ? 'up' : pct < -5 ? 'down' : 'flat' };
+  }
+
+  const projMonthly = perDay * 30;
+  const tariff = parseFloat(settings.tariff) || 0;
+  const kwhPerDay = tariff > 0 ? (perDay * 100) / tariff : null;
+
+  return { spent: totalSpent, hours: coveredDays*24, perHour, perDay, remaining, daysLeft, runOutDate, totalTopup, trend, projMonthly, kwhPerDay, lastDate,
+           burnRate, daysLeftWorst, runOutWorst, forecastSpread, forecastDays: FORECAST_DAYS };
+}
+
+// §4.2 — cycle progress: how much of the most recent top-up has been used.
+// Replaces the old "days/30" bar, which pinned at 100% for the first ~11
+// days of an £80 top-up and looked broken. Returns null when there's no
+// top-up on record yet — the caller should hide the bar in that case.
+function calcCycleProgress(entries, currentBalance) {
+  const topups = entries.filter(e => e.type === 'topup' && e.added != null)
+    .sort((a,b) => parseLocal(b.datetime) - parseLocal(a.datetime));
+  if (!topups.length) return null;
+  const added = parseFloat(topups[0].added);
+  if (!(added > 0)) return null; // guard against a corrupt/zero entry
+  let pct = ((added - currentBalance) / added) * 100;
+  if (pct < 0) pct = 0;   // balance exceeds the top-up amount — clamp 0%
+  if (pct > 100) pct = 100; // balance negative — clamp 100%
+  return { pct, added };
+}
+
+// §6.2 — debt/emergency-credit reconciliation. On an ACE9000, dropping
+// below zero puts the meter on emergency credit; the standing charge
+// keeps accruing as debt while off-supply, and that debt is recovered as
+// a lump the instant a top-up key goes in. Without this, the discrepancy
+// between "previousBalance + added" and the balance the meter actually
+// shows afterwards gets silently absorbed into calcDailyUsage as if it
+// were ordinary electricity use on the days before the top-up — the
+// owner's real data shows this exact pattern repeating (19/06, 20/07,
+// 28/08). This function only detects the discrepancy; it never assumes
+// what it means; the caller must ask the user to confirm before storing
+// it as debtRecovered, per §6.2's build steps.
+const DEBT_RECONCILE_TOLERANCE = 0.05; // pennies of rounding noise, not a real discrepancy
+function calcDebtDiscrepancy(previousBalance, added, balanceAfter) {
+  const expected = previousBalance + added;
+  const discrepancy = expected - balanceAfter;
+  if (discrepancy <= DEBT_RECONCILE_TOLERANCE) return null;
+  return discrepancy;
+}
+
+// §6.3 — electricity-only spend aggregated by calendar month. Single
+// source of truth shared by the monthly summary table and the seasonal
+// projection caveat, so the two never disagree about what a month cost.
+function calcMonthlyUsage(entries) {
+  const daily = calcDailyUsage(entries);
+  const months = {};
+  daily.forEach(d => {
+    const k = monthKey(d.date);
+    months[k] = (months[k] || 0) + d.value;
+  });
+  return months;
+}
+
+// Same-month-last-year comparison for the projection caveat. Returns null
+// when that month doesn't exist yet in the data — which will be true for
+// this owner until June/July/August 2027, and the caller must fall back
+// to the plain seasonal-warning label in that case rather than pretend a
+// comparison exists.
+function calcYearOverYear(entries, referenceDate) {
+  const months = calcMonthlyUsage(entries);
+  const thisMonthKey = monthKey(referenceDate);
+  const lastYearDate = new Date(referenceDate.getFullYear() - 1, referenceDate.getMonth(), 1);
+  const lastYearKey = monthKey(lastYearDate);
+  if (months[lastYearKey] == null) return null;
+  return { thisMonthKey, lastYearKey, lastYearUsed: months[lastYearKey] };
+}
+
+// §6.9 — compare-to-usual. "This week" is the trailing 7 days ending at
+// the last reading (matching calcStats' own '7d' period definition, so
+// this figure is never subtly different from what the period selector
+// already shows). "Usual" is the average of the four 7-day windows
+// immediately before that — deliberately non-overlapping with the
+// current window, since comparing this week against an average that
+// included this week would be a circular, self-referential comparison
+// that always understates how unusual the current week actually is.
+// Returns null rather than a comparison built on too little history.
+function calcCompareToUsual(entries, referenceDate) {
+  const daily = calcDailyUsage(entries);
+  if (!daily.length) return null;
+  function spendInWindow(endMs, days) {
+    const startMs = endMs - days*86400000;
+    let total = 0, covered = 0;
+    daily.forEach(d => {
+      const dayStart = parseLocal(d.key).getTime();
+      const dayEnd = dayStart + 86400000;
+      if (dayEnd <= startMs || dayStart >= endMs) return;
+      const overlapStart = Math.max(dayStart, startMs);
+      const overlapEnd = Math.min(dayEnd, endMs);
+      const frac = (overlapEnd - overlapStart) / 86400000;
+      total += d.value * frac;
+      covered += frac;
+    });
+    return { total, covered };
+  }
+  const nowMs = referenceDate.getTime();
+  const thisWeek = spendInWindow(nowMs, 7);
+  if (thisWeek.covered < 7) return null; // not a full week of data yet
+
+  const priorWeeks = [];
+  for (let i = 1; i <= 4; i++) {
+    const w = spendInWindow(nowMs - i*7*86400000, 7);
+    if (w.covered >= 7) priorWeeks.push(w.total);
+  }
+  if (priorWeeks.length < 2) return null; // too little prior history for "usual" to mean anything
+
+  const usualAvg = priorWeeks.reduce((s,v) => s+v, 0) / priorWeeks.length;
+  const diff = thisWeek.total - usualAvg;
+  return { thisWeek: thisWeek.total, usualAvg, diff, weeksCompared: priorWeeks.length };
+}
+
+// §5.1 — single source of truth for the balance-driven urgency state that
+// used to be computed four separate times in renderMeter with hardcoded
+// 2/4-day thresholds. Critical is a fixed <3 days per the doc's table;
+// low uses the existing topupRemind setting as its boundary rather than a
+// second hardcoded number, so the one "warn me" setting the owner can
+// already see in Settings is what actually drives this instead of a
+// number nowhere visible to them. Guards against topupRemind being set
+// below the critical threshold, which would otherwise invert the tiers.
+function calcUrgency(daysLeft, topupRemind) {
+  const CRITICAL_DAYS = 3;
+  const lowBoundary = Math.max(topupRemind, CRITICAL_DAYS);
+  if (daysLeft < CRITICAL_DAYS) return 'critical';
+  if (daysLeft < lowBoundary) return 'low';
+  return 'healthy';
+}
+
+// §6.6 — forecast confidence. Honest by construction: it reports what it
+// actually measures (reading density in the last 7 days, or staleness if
+// there's been a long gap) rather than a vague "confidence score" with
+// no visible basis. Uses genuine wall-clock now, same reasoning as
+// freshnessPromptHTML — a claim about how trustworthy the forecast is
+// right now has to be measured against the actual present moment.
+function calcForecastConfidence(entries, lastReadingDate) {
+  const now = Date.now();
+  const daysSinceLast = (now - lastReadingDate.getTime()) / 86400000;
+  const sevenDaysAgo = now - 7*86400000;
+  const recentCount = entries.filter(e => e.balance != null && parseLocal(e.datetime).getTime() >= sevenDaysAgo).length;
+
+  if (daysSinceLast >= 10) {
+    return { level: 'rough', label: 'Forecast confidence: rough', detail: 'last reading ' + Math.floor(daysSinceLast) + ' days ago' };
+  }
+  if (recentCount >= 5) {
+    return { level: 'good', label: 'Forecast confidence: good', detail: recentCount + ' readings in the last 7 days' };
+  }
+  if (recentCount >= 2) {
+    return { level: 'fair', label: 'Forecast confidence: fair', detail: recentCount + ' readings in the last 7 days' };
+  }
+  return { level: 'rough', label: 'Forecast confidence: rough', detail: recentCount <= 1 ? 'only ' + recentCount + ' reading in the last 7 days' : recentCount + ' readings in the last 7 days' };
+}
+
+// ── State ─────────────────────────────────────────────────
+let activeFuel = 'electricity';
+let darkMode = false;
+let showAll = false;
+let editingId = null;
+let dtAdjustOpen = false;
+let insightsPeriod = '30d';
+let pendingEntry = null;
+
+const PERIODS = [
+  {key:'24h', label:'24h'},
+  {key:'7d',  label:'7 days'},
+  {key:'30d', label:'30 days'},
+  {key:'all', label:'All time'},
+];
+
+// ── Fuel switching ────────────────────────────────────────
+function switchFuel(fuel) {
+  if (fuel === activeFuel) return;
+  activeFuel = fuel;
+  document.getElementById('fuel-elec').classList.toggle('active', fuel === 'electricity');
+  document.getElementById('fuel-gas').classList.toggle('active', fuel === 'gas');
+  applyFuelTheme();
+  insightsPeriod = '30d';
+  editingId = null;
+  showAll = false;
+  renderMeter();
+  // Refresh whichever other tab happens to be the active page, since its
+  // fuel-aware labels and data need to reflect the newly selected fuel too.
+  if (document.getElementById('page-insights').classList.contains('active')) renderInsights();
+  if (document.getElementById('page-history').classList.contains('active')) { updateHistoryLabels(); renderHistory(); }
+  if (document.getElementById('page-settings').classList.contains('active')) { updateSettingsLabels(); renderSettings(); }
+}
+
+function applyFuelTheme() {
+  const root = document.documentElement;
+  // Contrast-corrected (§5.4 re-check) from the original bright
+  // #7B6EF6/#5B9CF6 and #F5A623/#F06A6A, which left white header text
+  // as low as 2.03:1 — essentially unreadable on the gas theme. These
+  // darker tones clear 4.5:1 while staying clearly purple/blue and
+  // amber/red respectively.
+  if (activeFuel === 'gas') {
+    root.style.setProperty('--grad-start', '#936315');
+    root.style.setProperty('--grad-end',   '#903F3F');
+  } else {
+    root.style.setProperty('--grad-start', '#5C52B8');
+    root.style.setProperty('--grad-end',   '#4475B8');
+  }
+}
+
+function updateHistoryLabels() {
+  const isGas = activeFuel === 'gas';
+  const eyebrow = document.getElementById('history-eyebrow');
+  if (eyebrow) eyebrow.textContent = isGas ? 'Gas Meter' : 'Electric Meter';
+}
+
+function updateSettingsLabels() {
+  const isGas = activeFuel === 'gas';
+  const eyebrow = document.getElementById('settings-eyebrow');
+  const standingSub = document.getElementById('set-standing-sub');
+  const resetSub = document.getElementById('reset-sub');
+  if (eyebrow) eyebrow.textContent = isGas ? 'Gas Meter' : 'Electric Meter';
+  if (standingSub) standingSub.textContent = isGas ? 'Gas standing charge (weekly)' : 'British Gas electricity standing charge (weekly)';
+  if (resetSub) resetSub.textContent = 'Delete all readings for ' + (isGas ? 'gas' : 'electricity');
+}
+
+// ── Navigation ────────────────────────────────────────────
+function showPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  document.getElementById('nav-'+p).classList.add('active');
+  if (p === 'meter') renderMeter();
+  if (p === 'insights') renderInsights();
+  if (p === 'history') {
+    updateHistoryLabels();
+    renderHistory();
+    const tuDt = document.getElementById('tu-dt');
+    if (tuDt && !tuDt.value) tuDt.value = toInputVal(new Date());
+  }
+  if (p === 'settings') {
+    updateSettingsLabels();
+    renderSettings();
+  }
+}
+
+function toggleTheme() {
+  darkMode = !darkMode;
+  document.body.classList.toggle('dark', darkMode);
+  const btn = document.getElementById('theme-btn');
+  if (btn) {
+    btn.innerHTML = icon(darkMode ? 'sun' : 'moon');
+    btn.setAttribute('aria-label', darkMode ? 'Switch to light theme' : 'Switch to dark theme');
+  }
+}
+
+// ── Timestamp ─────────────────────────────────────────────
+function updateTimestamp() {
+  const ts = document.getElementById('q-ts');
+  if (ts) ts.innerHTML = icon('calendar') + ' ' + fmt(new Date());
+  const sub = document.getElementById('meter-page-sub');
+  if (sub) {
+    const entries = loadEntries();
+    const withBal = entries.filter(e => e.balance != null).sort((a,b) => parseLocal(b.datetime)-parseLocal(a.datetime));
+    if (withBal.length) {
+      const last = withBal[0];
+      sub.textContent = '\u00a3' + parseFloat(last.balance).toFixed(2) + ' \u00b7 ' + fmt(parseLocal(last.datetime));
+    } else {
+      sub.textContent = 'No readings yet';
+    }
+  }
+}
+
+// ── Quick entry ───────────────────────────────────────────
+let _dtAdjustOpen = false;
+function toggleAdjustTime() {
+  _dtAdjustOpen = !_dtAdjustOpen;
+  const row = document.getElementById('q-dt-row');
+  const btn = document.getElementById('q-adjust-btn');
+  row.classList.toggle('open', _dtAdjustOpen);
+  btn.textContent = _dtAdjustOpen ? 'Use current time \u25b4' : 'Adjust time \u25be';
+  if (_dtAdjustOpen) {
+    const dtInput = document.getElementById('q-dt');
+    if (!dtInput.value) dtInput.value = toInputVal(new Date());
+  }
+}
+
+function quickSave() {
+  const amtEl = document.getElementById('q-amt');
+  const warnEl = document.getElementById('q-datewarn');
+  warnEl.style.display = 'none';
+  const raw = amtEl.value.trim();
+  if (!raw) {
+    amtEl.style.borderColor = 'var(--red)';
+    setTimeout(() => { amtEl.style.borderColor = ''; }, 800);
+    return;
+  }
+  // §7.2 — now that this is a plain text field, parseFloat alone isn't
+  // enough validation: it silently accepts "12abc" as 12 and "1e10" as
+  // ten billion (exactly the stray-characters/scientific-notation problem
+  // the iOS number keypad caused in the first place). A strict pattern
+  // check first means only a genuine plain decimal gets through, with a
+  // clear reject rather than a garbled number silently saved.
+  if (!/^(\d+\.?\d{0,2}|\.\d{1,2})$/.test(raw)) {
+    amtEl.style.borderColor = 'var(--red)';
+    setTimeout(() => { amtEl.style.borderColor = ''; }, 800);
+    return;
+  }
+  const val = parseFloat(raw);
+  if (isNaN(val) || val < 0) return;
+
+  // Use adjusted time if open, otherwise now
+  let dtStr;
+  if (_dtAdjustOpen && document.getElementById('q-dt').value) {
+    dtStr = document.getElementById('q-dt').value;
+  } else {
+    dtStr = toInputVal(new Date());
+  }
+
+  const entries = loadEntries();
+  const sorted = [...entries].filter(e => e.balance != null).sort((a,b) => parseLocal(a.datetime)-parseLocal(b.datetime));
+
+  // Date order check
+  if (sorted.length && dtStr < sorted[sorted.length-1].datetime) {
+    warnEl.style.display = 'block';
+  }
+
+  const entry = { id: Date.now(), type: 'reading', datetime: dtStr, balance: val.toFixed(2) };
+  entries.push(entry);
+  saveEntries(entries);
+  showSaveToast('Saved \u00b7 \u00a3' + val.toFixed(2), entry.id);
+  amtEl.value = '';
+  // Reset adjust time
+  if (_dtAdjustOpen) {
+    _dtAdjustOpen = false;
+    document.getElementById('q-dt-row').classList.remove('open');
+    document.getElementById('q-adjust-btn').textContent = 'Adjust time \u25be';
+    document.getElementById('q-dt').value = '';
+  }
+
+  // Smart top-up detection — did balance go up?
+  if (sorted.length) {
+    const prevBal = parseFloat(sorted[sorted.length-1].balance);
+    if (val > prevBal) {
+      pendingEntry = entry;
+      pendingEntry._prevBal = prevBal; // stashed for debt reconciliation in confirmTopup
+      const diff = (val - prevBal).toFixed(2);
+      const fuel = activeFuel === 'gas' ? 'gas' : 'electricity';
+      document.getElementById('ts-title').textContent = 'Did you top up your ' + fuel + '?';
+      document.getElementById('ts-msg').textContent = 'Your balance went up by \u00a3' + diff + ' \u2014 did you add credit at a shop?';
+      document.getElementById('ts-added').value = '';
+      document.getElementById('topup-sheet-bg').classList.add('open');
+    } else {
+      renderMeter();
+    }
+  } else {
+    renderMeter();
+  }
+}
+
+function confirmTopup() {
+  const added = parseFloat(document.getElementById('ts-added').value);
+  let entryId = null, prevBal = null, balanceAfter = null;
+  if (pendingEntry && !isNaN(added) && added > 0) {
+    const entries = loadEntries();
+    const idx = entries.findIndex(e => e.id === pendingEntry.id);
+    if (idx >= 0) {
+      entries[idx].type = 'topup';
+      entries[idx].added = added.toFixed(2);
+      saveEntries(entries);
+      entryId = entries[idx].id;
+      prevBal = pendingEntry._prevBal;
+      balanceAfter = parseFloat(entries[idx].balance);
+    }
+  }
+  pendingEntry = null;
+  document.getElementById('topup-sheet-bg').classList.remove('open');
+
+  // §6.2 — check for an emergency-credit/debt discrepancy before finishing.
+  if (entryId != null && prevBal != null) {
+    maybeOfferDebtReconciliation(entryId, prevBal, added, balanceAfter);
+  } else {
+    renderMeter();
+  }
+}
+
+function dismissTopupSheet() {
+  pendingEntry = null;
+  document.getElementById('topup-sheet-bg').classList.remove('open');
+  renderMeter();
+}
+
+// §7.3 — save toast + undo. Undo removes the exact entry just saved by
+// id, not just "the last entry in the array", so it stays correct even
+// if the smart top-up sheet or a debt reconciliation happens to add
+// another entry in between (rare, but the id-based approach makes it a
+// non-issue rather than a subtle edge case).
+let toastTimeout = null;
+let lastSavedEntryId = null;
+
+function showSaveToast(message, entryId) {
+  lastSavedEntryId = entryId;
+  const toast = document.getElementById('save-toast');
+  const msgEl = document.getElementById('toast-msg');
+  if (!toast || !msgEl) return;
+  msgEl.textContent = message;
+  toast.classList.add('open');
+  clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.classList.remove('open');
+    lastSavedEntryId = null;
+  }, 5000);
+}
+
+function undoLastSave() {
+  if (lastSavedEntryId == null) return;
+  clearTimeout(toastTimeout);
+  document.getElementById('save-toast').classList.remove('open');
+  saveEntries(loadEntries().filter(e => e.id !== lastSavedEntryId));
+  lastSavedEntryId = null;
+  // Refresh whichever views could be showing the now-removed entry.
+  renderMeter();
+  if (document.getElementById('page-history').classList.contains('active')) renderHistory();
+  if (document.getElementById('page-insights').classList.contains('active')) renderInsights();
+}
+
+// §6.2 — shared by both places a top-up can be created (smart-detection
+// confirm and the manual entry form). Never assumes the discrepancy is
+// debt — always asks, with the computed figure pre-filled and editable,
+// per the doc's exact build steps.
+let pendingDebtEntryId = null;
+
+function maybeOfferDebtReconciliation(entryId, prevBal, added, balanceAfter) {
+  const discrepancy = calcDebtDiscrepancy(prevBal, added, balanceAfter);
+  if (discrepancy == null) { renderMeter(); return; }
+  pendingDebtEntryId = entryId;
+  document.getElementById('debt-amount').value = discrepancy.toFixed(2);
+  document.getElementById('debt-sheet-msg').textContent =
+    '\u00a3' + discrepancy.toFixed(2) + ' of this top-up doesn\u2019t match your expected balance \u2014 ' +
+    'likely emergency credit or standing charge recovered while off-supply. Is that right?';
+  document.getElementById('debt-sheet-bg').classList.add('open');
+}
+
+function confirmDebtRecovered() {
+  const amt = parseFloat(document.getElementById('debt-amount').value);
+  if (pendingDebtEntryId != null && !isNaN(amt) && amt > 0) {
+    const entries = loadEntries();
+    const idx = entries.findIndex(e => e.id === pendingDebtEntryId);
+    if (idx >= 0) {
+      entries[idx].debtRecovered = amt.toFixed(2);
+      saveEntries(entries);
+    }
+  }
+  pendingDebtEntryId = null;
+  document.getElementById('debt-sheet-bg').classList.remove('open');
+  renderMeter();
+  renderHistory(); // in case History is the active tab and needs the new field reflected
+}
+
+function dismissDebtSheet() {
+  // "No, it was all electricity" — leave debtRecovered unset. The
+  // discrepancy will be treated as ordinary usage, same as before §6.2.
+  pendingDebtEntryId = null;
+  document.getElementById('debt-sheet-bg').classList.remove('open');
+  renderMeter();
+}
+
+// §5.5 — faint header sparkline replacing the purely decorative circles.
+// Deliberately minimal: no axes, no labels, no grid — those would fight
+// with the header text sitting on top of it at low opacity, and the
+// point is the same "background texture" role the circles played, not a
+// second readable chart (Insights already has the real one). White
+// stroke/fill since it sits on the coloured header, not the app's normal
+// card backgrounds — currentColor would resolve to the header's own text
+// colour context, which is already white here, so this could use
+// currentColor too, but an explicit white is clearer about intent given
+// this element is never meant to appear anywhere else.
+function renderHeaderSparkline(entries) {
+  const el = document.getElementById('meter-header-sparkline');
+  if (!el) return;
+  const daily = calcDailyUsage(entries).slice(-30);
+  if (daily.length < 2) { el.innerHTML = ''; return; }
+  const W = 400, H = 140; // fixed internal coordinate system; CSS scales the container to the real header size
+  const maxY = Math.max(...daily.map(d => d.value), 0.01) * 1.15;
+  const sx = i => (i / (daily.length - 1)) * W;
+  const sy = v => H - (v / maxY) * H;
+  const poly = daily.map((d,i) => sx(i)+','+sy(d.value)).join(' ');
+  const areaPts = '0,'+H+' '+poly+' '+W+','+H;
+  el.innerHTML =
+    '<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none" style="width:100%;height:100%;display:block">'+
+      '<polygon points="'+areaPts+'" fill="#fff" fill-opacity="0.15"/>'+
+      '<polyline points="'+poly+'" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>'+
+    '</svg>';
+}
+
+// ── Render Meter page ─────────────────────────────────────
+function renderMeter() {
+  updateTimestamp();
+  const entries = loadEntries();
+  const settings = loadSettings();
+  renderHeaderSparkline(entries);
+  const isGas = activeFuel === 'gas';
+  const alertEl = document.getElementById('meter-alert');
+  const statsEl = document.getElementById('meter-stats');
+
+  // Fuel-aware labels
+  const eyebrow = document.getElementById('meter-eyebrow');
+  const quickLabel = document.getElementById('quick-label');
+  if (eyebrow) eyebrow.textContent = isGas ? 'Gas Meter' : 'Electric Meter';
+  if (quickLabel) quickLabel.textContent = (isGas ? 'Gas' : 'Electricity') + ' meter balance';
+
+  // §4.4 — the Meter page no longer has a period selector; it always shows
+  // the last-7-days view. This matches its pre-existing default and the
+  // "vs the week before" framing used in the demoted rate line's trend.
+  // The single remaining period selector lives on Insights (insightsPeriod).
+  const stats = calcStats(entries, '7d');
+  const lowBalance = parseFloat(settings.lowBalance) || 10;
+  const topupRemind = parseFloat(settings.topupRemind) || 5;
+  const sc = parseFloat(settings.standingCharge) || 0;
+
+  // §5.1 — single derived urgency state drives the header, hero number,
+  // and progress fill together, replacing four separate hardcoded 2/4-day
+  // checks that used to disagree with each other if one was ever edited
+  // without the others. Alert banner threshold (topupRemind) and the
+  // critical <3-day boundary are the same two numbers everywhere now.
+  const urgency = stats ? calcUrgency(stats.daysLeft, topupRemind) : 'healthy';
+  const headerEl = document.getElementById('meter-header');
+  if (headerEl) {
+    headerEl.classList.remove('urgency-healthy','urgency-low','urgency-critical');
+    if (stats) headerEl.classList.add('urgency-' + urgency);
+  }
+
+  // Alert banner
+  let alertHTML = '';
+  if (stats) {
+    if (urgency === 'critical') {
+      alertHTML = '<div class="alert-banner danger"><div class="alert-icon danger">'+icon('dot')+'</div><div><div class="alert-main danger">Top up now \u2014 may cut out today!</div><div class="alert-sub">Last reading: '+fmt(stats.lastDate)+'</div></div></div>';
+    } else if (urgency === 'low') {
+      alertHTML = '<div class="alert-banner warn"><div class="alert-icon warn">'+icon('dot')+'</div><div><div class="alert-main warn">About '+Math.round(stats.daysLeft)+' days remaining \u2014 consider topping up</div><div class="alert-sub">Last reading: '+fmt(stats.lastDate)+'</div></div></div>';
+    }
+  }
+  // §7.5 — passive backup nudge, computed fresh on every render (rather
+  // than mutated in separately) so it can never be silently wiped out by
+  // the next renderMeter() call, and correctly disappears once a backup
+  // is genuinely recorded without needing a separate DOM patch.
+  alertHTML += backupNudgeHTML();
+  // §6.5 — reading freshness prompt. The forecast is only as good as how
+  // recently it was fed, and the owner's real gaps (8 and 15 days between
+  // readings) show the app was otherwise entirely passive about the one
+  // input it actually needs. A soft line, not another loud banner — tone
+  // escalates past ~5 days per the doc's own framing, using the same
+  // warn/danger colour language as everywhere else rather than a new one.
+  if (stats) alertHTML += freshnessPromptHTML(stats.lastDate);
+  alertEl.innerHTML = alertHTML;
+
+  if (!stats) {
+    const count = entries.filter(e => e.balance != null).length;
+    statsEl.innerHTML =
+      '<div class="empty-state">'+
+        '<div class="empty-icon">'+(isGas ? icon('flame') : icon('bolt'))+'</div>'+
+        '<div class="empty-title">'+(count<1?'No readings yet':'Not enough data')+'</div>'+
+        '<div class="empty-sub" style="max-width:240px;margin:6px auto 0">'+(count<1?'Enter your current meter balance above.':'Add more readings or select a wider period.')+'</div>'+
+        (count<1&&!isGas?'<div style="margin-top:14px;font-size:12px;color:var(--text3)">Tip: check screen A on your ACE9000</div>':'')+
+      '</div>';
+    return;
+  }
+
+  const runClass = urgency==='critical'?'danger':urgency==='low'?'warn':'healthy';
+  const runIconColour = runClass==='danger'?'var(--red)':runClass==='warn'?'var(--amber)':'var(--green)';
+  // §8 — colour is never the sole carrier of the low-balance signal: the
+  // note below always states the threshold in words, with colour as
+  // reinforcement rather than the only cue. This also fixes a real gap
+  // found while auditing this: `lowBalance` was a configurable Settings
+  // value with no consumer anywhere in the render — it computed a
+  // `balClass` that was never applied to any element.
+  const lowBalanceNote = stats.remaining <= lowBalance
+    ? '<div class="balance-hero-sub" style="color:var(--red-text);font-weight:600;margin-top:4px">Below your \u00a3'+lowBalance.toFixed(2)+' low balance warning</div>'
+    : '';
+  const cycle = calcCycleProgress(entries, stats.remaining);
+  const trendDir = stats.trend ? stats.trend.dir : '';
+  const trendLabel = trendDir==='up'?'\u25b2 Usage up':trendDir==='down'?'\u25bc Usage down':'\u2192 Similar to before';
+  const trendHTML = stats.trend ? '<div class="rate-trend '+trendDir+'">'+trendLabel+' '+stats.trend.pct+'% vs prior period</div>' : '';
+  const scNote = sc > 0 ? '<div class="rate-sc-note">Electricity use only (standing charge deducted)</div>' : '';
+
+  // Forecast wording. Under critical we talk in hours; otherwise whole
+  // days, because a tenth of a day is precision the readings can't support.
+  const daysLeftLabel = urgency === 'critical'
+    ? Math.round(stats.daysLeft * 24) + ' hrs left'
+    : 'about ' + Math.round(stats.daysLeft) + ' days left';
+  const runOutSub = stats.forecastSpread
+    ? 'As early as ' + fmt(stats.runOutWorst) + ' if usage picks up'
+    : 'Estimated from your last ' + stats.forecastDays + ' days';
+
+  // §4.1 — balance and run-out are the primary decision-relevant figures,
+  // so they lead the page. The daily/hourly rate that used to be the 48px
+  // hero is demoted to a supporting card below. Weekly framing added
+  // alongside daily since top-ups happen in lumps, not by the day.
+  const weeklyRate = stats.perDay * 7;
+  const heroClass = urgency==='critical'?'danger':urgency==='low'?'warn':'healthy';
+
+  // §6.2 — surface the most recently confirmed debt recovery, if any. The
+  // doc's build steps only ask to record and exclude this from usage
+  // maths, not maintain a running "amount still owed" ledger, so this is
+  // informational context about the last top-up rather than a live balance.
+  const debtTopups = entries.filter(e => e.type === 'topup' && e.debtRecovered != null)
+    .sort((a,b) => parseLocal(b.datetime) - parseLocal(a.datetime));
+  const debtNote = debtTopups.length
+    ? '<div class="rate-sc-note" style="color:var(--amber-text)">\u00a3'+parseFloat(debtTopups[0].debtRecovered).toFixed(2)+
+      ' of your last top-up went to debt/emergency credit, not usage</div>'
+    : '';
+
+  const confidence = calcForecastConfidence(entries, stats.lastDate);
+  const confColour = confidence.level==='good'?'var(--green-text)':confidence.level==='fair'?'var(--amber-text)':'var(--red-text)';
+
+  statsEl.innerHTML =
+    '<div class="card">'+
+      '<div class="balance-hero">'+
+        '<div class="balance-hero-value'+(heroClass?' '+heroClass:'')+'">\u00a3'+parseFloat(stats.remaining).toFixed(2)+'</div>'+
+        '<div class="balance-hero-sub">'+daysLeftLabel+'</div>'+
+        lowBalanceNote+
+      '</div>'+
+      (cycle?'<div class="progress-wrap"><div class="progress-fill'+(runClass?' '+runClass:'')+'" style="width:'+cycle.pct.toFixed(0)+'%"></div></div>':'')+
+      '<div class="balance-hero-runout runout-row">'+
+        '<span style="font-size:20px;color:'+runIconColour+'">'+icon('dot')+'</span>'+
+        '<div><div class="runout-date">Runs out ~'+fmt(stats.runOutDate)+'</div><div class="runout-sub">'+runOutSub+'</div>'+
+        '<div class="runout-sub" style="color:'+confColour+';font-weight:600;margin-top:3px">'+confidence.label+' \u2014 '+confidence.detail+'</div></div>'+
+      '</div>'+
+      '<button class="plan-topup-btn" onclick="openTopupPlanner()">Plan a top-up</button>'+
+    '</div>'+
+    '<div class="card">'+
+      '<div class="rate-context">\u00a3'+weeklyRate.toFixed(2)+'/week &nbsp;&middot;&nbsp; \u00a3'+stats.perDay.toFixed(2)+'/day</div>'+
+      trendHTML+
+      scNote+
+      debtNote+
+    '</div>'+
+    '<div class="version-tag">v3.5</div>';
+}
+
+// ── Top-up planner (§6.1) ─────────────────────────────────
+// Answers the question actually asked standing in the shop: either "make
+// it last until this date, how much do I need?" or "if I add this much,
+// how long does it last?". Both directions read burnRate off the stats
+// object already computed for the Meter page — the real gross drain rate
+// from §2.1/§2.3, not the electricity-only `perDay` — because gross is
+// what actually empties the meter, and that's the number worth planning
+// around when the goal is "don't run out."
+let plannerStats = null;
+
+function openTopupPlanner() {
+  const entries = loadEntries();
+  plannerStats = calcStats(entries, '7d');
+  if (!plannerStats) {
+    openModal('Top-up planner', 'Add at least two readings first so the app has a usage rate to plan against.', () => {});
+    return;
+  }
+
+  const rate = plannerStats.burnRate;
+  document.getElementById('planner-rate-note').textContent =
+    'Based on your recent rate of \u00a3' + rate.toFixed(2) + '/day (gross, incl. standing charge).';
+
+  // Default the date field to a sensible starting point — one week out —
+  // so there's something to see before the user touches anything.
+  const dateInput = document.getElementById('planner-date');
+  const defaultDate = new Date(plannerStats.lastDate.getTime() + 7*86400000);
+  dateInput.value = toDateInputVal(defaultDate);
+  document.getElementById('planner-amount').value = '';
+  document.getElementById('planner-amount-result').innerHTML = '';
+  plannerDateChanged();
+
+  document.getElementById('planner-sheet-bg').classList.add('open');
+}
+
+function closePlanner() {
+  document.getElementById('planner-sheet-bg').classList.remove('open');
+}
+
+function toDateInputVal(date) {
+  const pad = n => String(n).padStart(2,'0');
+  return date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate());
+}
+
+// Direction 1: "Make it last until [date] → you'll need to add £X"
+// The buffer is a safety margin on the amount to buy, not a distortion of
+// the maths — it exists because burnRate is an estimate, and topping up
+// exactly to the wire means a slightly-worse week puts you back in the
+// shop early. It has no place in Direction 2, which answers a factual
+// question about a fixed amount, not a target to size a purchase against.
+function plannerDateChanged() {
+  const resultEl = document.getElementById('planner-date-result');
+  const dateStr = document.getElementById('planner-date').value;
+  if (!dateStr || !plannerStats) { resultEl.innerHTML = ''; return; }
+
+  const targetDate = parseLocal(dateStr + 'T00:00');
+  const daysNeeded = (targetDate.getTime() - plannerStats.lastDate.getTime()) / 86400000;
+
+  if (daysNeeded <= 0) {
+    resultEl.innerHTML = '<span class="planner-result empty">Pick a date after your last reading.</span>';
+    return;
+  }
+
+  const settings = loadSettings();
+  const bufferPct = (parseFloat(settings.topupBuffer) || 10) / 100;
+
+  const totalNeeded = daysNeeded * plannerStats.burnRate;
+  const shortfall = totalNeeded - plannerStats.remaining;
+
+  if (shortfall <= 0) {
+    resultEl.innerHTML = '<strong>You already have enough</strong>'+
+      '<span class="planner-sub">Your current balance should last past that date at this rate.</span>';
+    return;
+  }
+
+  const withBuffer = shortfall * (1 + bufferPct);
+  resultEl.innerHTML = 'You\u2019ll need to add <strong>\u00a3'+withBuffer.toFixed(2)+'</strong>'+
+    '<span class="planner-sub">includes '+(bufferPct*100).toFixed(0)+'% buffer on top of the \u00a3'+shortfall.toFixed(2)+' bare minimum</span>';
+}
+
+// Direction 2: "If I add £X → that lasts until [date]"
+// Deliberately no buffer here — this reports what a fixed amount actually
+// does, not a target. Padding it would just be a wrong answer.
+function plannerAmountChanged() {
+  const resultEl = document.getElementById('planner-amount-result');
+  const amt = parseFloat(document.getElementById('planner-amount').value);
+  if (!amt || amt <= 0 || !plannerStats) { resultEl.innerHTML = ''; return; }
+
+  const daysLasting = (plannerStats.remaining + amt) / plannerStats.burnRate;
+  const resultDate = new Date(plannerStats.lastDate.getTime() + daysLasting * 86400000);
+
+  resultEl.innerHTML = 'That lasts until <strong>'+fmt(resultDate)+'</strong>'+
+    '<span class="planner-sub">about '+Math.round(daysLasting)+' days from your last reading</span>';
+}
+
+// ── Render Insights ───────────────────────────────────────
+function setInsightsPeriod(p) { insightsPeriod = p; renderInsights(); }
+
+function renderInsights() {
+  const entries = loadEntries();
+  const stats = calcStats(entries, insightsPeriod);
+
+  // Period selector
+  const periodsEl = document.getElementById('insights-periods');
+  if (periodsEl) {
+    periodsEl.innerHTML = PERIODS.map(p =>
+      '<button class="period-btn'+(insightsPeriod===p.key?' active':'')+'" onclick="setInsightsPeriod(\''+p.key+'\')">'+p.label+'</button>'
+    ).join('');
+  }
+
+  // §6.3 — seasonal honesty on the monthly projection. projMonthly is a
+  // flat extrapolation of the selected period's rate; in a UK home with
+  // electric heating that can be badly wrong in either direction depending
+  // on which season the period happens to fall in. Minimum: always label
+  // it as a same-usage projection, not a forecast of the actual month
+  // ahead. Better: once the same calendar month exists from a year ago,
+  // show the real comparison instead of a generic warning.
+  let projCaveat = '';
+  if (stats) {
+    const yoy = calcYearOverYear(entries, stats.lastDate);
+    if (yoy) {
+      const diff = stats.projMonthly - yoy.lastYearUsed;
+      const pct = yoy.lastYearUsed > 0 ? (diff / yoy.lastYearUsed) * 100 : null;
+      const dir = diff > 0 ? 'more' : diff < 0 ? 'less' : 'the same as';
+      const pctStr = (pct != null && Math.abs(pct) >= 1) ? ' (' + Math.abs(pct).toFixed(0) + '% ' + dir + ')' : '';
+      projCaveat = '<div class="stat-sub">vs \u00a3' + yoy.lastYearUsed.toFixed(2) + ' this month last year' + pctStr + '</div>';
+    } else {
+      const m = stats.lastDate.getMonth() + 1; // 1-12
+      let seasonNote;
+      if (m===12||m===1||m===2) seasonNote = 'summer will likely be lower';
+      else if (m===6||m===7||m===8) seasonNote = 'winter will likely be higher';
+      else seasonNote = 'usage varies by season';
+      projCaveat = '<div class="stat-sub">At current usage \u2014 ' + seasonNote + '</div>';
+    }
+  }
+
+  // Summary strip
+  const summaryEl = document.getElementById('insights-summary');
+  if (summaryEl) {
+    if (!stats) {
+      summaryEl.innerHTML = '<div class="chart-empty" style="padding:8px 0">Not enough data for this period.</div>';
+    } else {
+      const daily = calcDailyUsage(entries);
+      const now = stats.lastDate;
+      let cutoffMs;
+      if (insightsPeriod==='24h') cutoffMs = now.getTime()-86400000;
+      else if (insightsPeriod==='7d') cutoffMs = now.getTime()-7*86400000;
+      else if (insightsPeriod==='30d') cutoffMs = now.getTime()-30*86400000;
+      else cutoffMs = 0;
+      const filtered = daily.filter(d => { const t=parseLocal(d.key).getTime(); return t>=cutoffMs && t<=now.getTime(); });
+      const maxDay = filtered.length ? filtered.reduce((a,b) => b.value>a.value?b:a) : null;
+      const minDay = filtered.length ? filtered.filter(d=>d.value>0).reduce((a,b) => b.value<a.value?b:a, filtered[0]) : null;
+      summaryEl.innerHTML =
+        '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">'+
+          '<div><div class="stat-label">Avg per day</div><div class="stat-value accent">\u00a3'+stats.perDay.toFixed(2)+'</div></div>'+
+          (maxDay?'<div><div class="stat-label">Highest day</div><div class="stat-value red">\u00a3'+maxDay.value.toFixed(2)+'</div><div class="stat-sub">'+fmtDay(maxDay.date)+'</div></div>':'<div></div>')+
+          (minDay&&minDay.value>0?'<div><div class="stat-label">Lowest day</div><div class="stat-value green">\u00a3'+minDay.value.toFixed(2)+'</div><div class="stat-sub">'+fmtDay(minDay.date)+'</div></div>':'<div></div>')+
+        '</div>'+compareToUsualHTML(entries, stats.lastDate);
+    }
+  }
+
+  const dailySub = document.getElementById('insights-daily-sub');
+  if (dailySub) {
+    const pl = PERIODS.find(p=>p.key===insightsPeriod);
+    dailySub.textContent = 'Last '+(pl?pl.label.toLowerCase():'30 days')+', interpolated between readings';
+  }
+
+  // §4.1 — figures moved off the Meter page live here now: used this
+  // period, hours, projected monthly, est. energy, total topped up.
+  const movedEl = document.getElementById('insights-moved-stats');
+  if (movedEl) {
+    if (!stats) {
+      movedEl.innerHTML = '';
+    } else {
+      movedEl.innerHTML =
+        '<div class="card-title">This period</div>'+
+        '<div class="stats-grid">'+
+          '<div class="stat-box"><div class="stat-label">Used this period</div><div class="stat-value">\u00a3'+stats.spent.toFixed(2)+'</div><div class="stat-sub">'+stats.hours.toFixed(1)+' hrs</div></div>'+
+          '<div class="stat-box"><div class="stat-label">Projected monthly</div><div class="stat-value accent">\u00a3'+stats.projMonthly.toFixed(2)+'</div>'+projCaveat+'</div>'+
+        '</div>'+
+        '<div class="stats-grid" style="margin-bottom:0">'+
+          '<div class="stat-box"><div class="stat-label">Total topped up</div><div class="stat-value green">\u00a3'+stats.totalTopup.toFixed(2)+'</div></div>'+
+          (stats.kwhPerDay?'<div class="stat-box"><div class="stat-label">Est. energy</div><div class="stat-value">'+stats.kwhPerDay.toFixed(1)+' kWh/day</div></div>':'<div></div>')+
+        '</div>';
+    }
+  }
+
+  renderDailyChart(entries, insightsPeriod);
+  renderRollingChart(entries);
+  renderMonthlyTable(entries);
+}
+
+// ── SVG helpers ───────────────────────────────────────────
+function svgW() { return Math.min(440, window.innerWidth - 64); }
+// §7.1 — width="100%" (not the fixed pixel W) so the SVG scales with its
+// container on resize/rotation; viewBox keeps the same W×H coordinate
+// system every sx/sy placement function in the chart renderers was
+// already written against, so none of that maths needed to change.
+// height stays a fixed pixel value deliberately — charts should get
+// wider on rotation, not taller, matching how the rest of the page reflows.
+function svgOpen(W,H) { return '<svg class="chart" width="100%" height="'+H+'" viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="xMidYMid meet">'; }
+function drawGrid(W,H,pad,maxY,steps,prefix) {
+  let out='';
+  for(let i=0;i<=steps;i++){
+    const val=(maxY*i)/steps, y=pad.t+(1-i/steps)*(H-pad.t-pad.b);
+    out+='<line x1="'+pad.l+'" y1="'+y+'" x2="'+(W-pad.r)+'" y2="'+y+'" stroke="var(--border)" stroke-width="1"/>';
+    out+='<text x="'+(pad.l-5)+'" y="'+(y+4)+'" text-anchor="end" font-size="12" fill="var(--text3)">'+(prefix||'')+(val<1?val.toFixed(2):val.toFixed(0))+'</text>';
+  }
+  return out;
+}
+
+// ── Daily chart ───────────────────────────────────────────
+function renderDailyChart(entries, period) {
+  const el = document.getElementById('chart-daily');
+  const daily = calcDailyUsage(entries);
+  if (daily.length < 2) { el.innerHTML='<div class="chart-empty">Not enough data yet.</div>'; return; }
+  const stats = calcStats(entries, period||'30d');
+  let pts;
+  if (!stats||period==='all') { pts = daily; }
+  else {
+    const now = stats.lastDate;
+    let cutoffMs;
+    if (period==='24h') cutoffMs=now.getTime()-86400000;
+    else if (period==='7d') cutoffMs=now.getTime()-7*86400000;
+    else cutoffMs=now.getTime()-30*86400000;
+    pts = daily.filter(d=>{ const t=parseLocal(d.key).getTime(); return t>=cutoffMs&&t<=now.getTime(); });
+    if (pts.length<2) pts=daily.slice(-30);
+  }
+  const W=svgW(),H=160,pad={t:12,r:12,b:28,l:40};
+  const maxY=Math.max(...pts.map(p=>p.value),0.01)*1.1;
+  const bw=Math.max(2,((W-pad.l-pad.r)/pts.length)-3);
+  const sx=i=>pad.l+(i+0.5)*((W-pad.l-pad.r)/pts.length);
+  const sy=v=>pad.t+(1-v/maxY)*(H-pad.t-pad.b);
+  const avgVal=pts.reduce((s,p)=>s+p.value,0)/pts.length;
+  const avgY=sy(avgVal);
+  const avgLine='<line x1="'+pad.l+'" y1="'+avgY+'" x2="'+(W-pad.r)+'" y2="'+avgY+'" stroke="var(--purple)" stroke-width="1" stroke-dasharray="3 3" opacity="0.4"/>';
+  let bars='',xlbl='';
+  const lstep=Math.max(1,Math.floor(pts.length/5));
+  pts.forEach((p,i)=>{
+    const x=sx(i),bh=Math.max(2,(H-pad.t-pad.b)*(p.value/maxY)),y=H-pad.b-bh;
+    const colour=p.value>avgVal*1.2?'#F06A6A':p.value<avgVal*0.8?'#4ECFA8':'#7B6EF6';
+    const alpha=0.5+0.5*(p.value/maxY);
+    bars+='<rect x="'+(x-bw/2)+'" y="'+y+'" width="'+bw+'" height="'+bh+'" fill="'+colour+'" opacity="'+alpha.toFixed(2)+'" rx="3"/>';
+    if(i%lstep===0) xlbl+='<text x="'+x+'" y="'+(H-pad.b+14)+'" text-anchor="middle" font-size="12" fill="var(--text3)">'+fmtDay(p.date)+'</text>';
+  });
+  el.innerHTML='<div class="chart-wrap">'+svgOpen(W,H)+drawGrid(W,H,pad,maxY,4,'\u00a3')+bars+avgLine+xlbl+'</svg>'+
+    '<div class="chart-legend"><span><span class="legend-dot" style="background:#7B6EF6"></span>Typical</span>'+
+    '<span><span class="legend-dot" style="background:#F06A6A"></span>High</span>'+
+    '<span><span class="legend-dot" style="background:#4ECFA8"></span>Low</span>'+
+    '<span style="color:var(--text3)">- - Avg \u00a3'+avgVal.toFixed(2)+'/day</span></div></div>';
+}
+
+// ── Rolling average chart ─────────────────────────────────
+function renderRollingChart(entries) {
+  const el = document.getElementById('chart-rolling');
+  const daily = calcDailyUsage(entries);
+  if (daily.length < 7) { el.innerHTML='<div class="chart-empty">Need at least 7 days of data.</div>'; return; }
+  const rolling=[];
+  for(let i=6;i<daily.length;i++){
+    const avg=daily.slice(i-6,i+1).reduce((s,d)=>s+d.value,0)/7;
+    rolling.push({date:daily[i].date,value:avg});
+  }
+  const pts=rolling.slice(-60);
+  const W=svgW(),H=160,pad={t:12,r:12,b:28,l:40};
+  const maxY=Math.max(...pts.map(p=>p.value),0.01)*1.1;
+  const minX=pts[0].date.getTime(),maxX=pts[pts.length-1].date.getTime();
+  const sx=x=>pad.l+(maxX===minX?(W-pad.l-pad.r)/2:((x-minX)/(maxX-minX))*(W-pad.l-pad.r));
+  const sy=v=>pad.t+(1-v/maxY)*(H-pad.t-pad.b);
+  const poly=pts.map(p=>sx(p.date.getTime())+','+sy(p.value)).join(' ');
+  const area=sx(pts[0].date.getTime())+','+(H-pad.b)+' '+poly+' '+sx(pts[pts.length-1].date.getTime())+','+(H-pad.b);
+  let xlbl='';
+  const lstep=Math.max(1,Math.floor(pts.length/4));
+  pts.forEach((p,i)=>{ if(i%lstep===0) xlbl+='<text x="'+sx(p.date.getTime())+'" y="'+(H-pad.b+14)+'" text-anchor="middle" font-size="12" fill="var(--text3)">'+fmtDay(p.date)+'</text>'; });
+  const lastPt=pts[pts.length-1];
+  const lx=sx(lastPt.date.getTime()),ly=sy(lastPt.value);
+  const annotation='<circle cx="'+lx+'" cy="'+ly+'" r="5" fill="#F5A623" stroke="var(--surface)" stroke-width="2"/>'+
+    '<text x="'+(lx-8)+'" y="'+(ly-10)+'" text-anchor="end" font-size="12" font-weight="700" fill="#F5A623">\u00a3'+lastPt.value.toFixed(2)+'</text>';
+  el.innerHTML='<div class="chart-wrap">'+svgOpen(W,H)+
+    '<defs><linearGradient id="ambG" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#F5A623" stop-opacity="0.2"/><stop offset="100%" stop-color="#F5A623" stop-opacity="0.02"/></linearGradient></defs>'+
+    drawGrid(W,H,pad,maxY,4,'\u00a3')+
+    '<polygon points="'+area+'" fill="url(#ambG)"/>'+
+    '<polyline points="'+poly+'" fill="none" stroke="#F5A623" stroke-width="2.5" stroke-linejoin="round"/>'+
+    annotation+xlbl+'</svg>'+
+    '<div class="chart-legend"><span style="color:var(--amber-text);font-weight:600">Current: \u00a3'+lastPt.value.toFixed(2)+'/day (7-day avg)</span></div></div>';
+}
+
+// ── Monthly table ─────────────────────────────────────────
+function renderMonthlyTable(entries) {
+  const el = document.getElementById('monthly-table');
+  if (!entries.length) { el.innerHTML='<div class="chart-empty">No data yet.</div>'; return; }
+  const daily = calcDailyUsage(entries);
+  const months = {};
+  entries.forEach(e => {
+    const k = monthKey(parseLocal(e.datetime));
+    if (!months[k]) months[k]={used:0,topups:0};
+    if (e.type==='topup') months[k].topups+=parseFloat(e.added||0);
+  });
+  daily.forEach(d => {
+    const k = monthKey(d.date);
+    if (!months[k]) months[k]={used:0,topups:0};
+    months[k].used+=d.value;
+  });
+  const keys=Object.keys(months).sort();
+  let html='<table class="month-table"><thead><tr><th>Month</th><th>Used</th><th>Topped up</th><th>Net</th></tr></thead><tbody>';
+  keys.forEach(k=>{
+    const net=months[k].topups-months[k].used;
+    const netStr=months[k].topups>0
+      ?(net>=0?'<span style="color:var(--green-text)">+\u00a3'+net.toFixed(2)+'</span>':'<span style="color:var(--red-text)">\u2212\u00a3'+Math.abs(net).toFixed(2)+'</span>')
+      :'&mdash;';
+    html+='<tr><td>'+monthLabel(k)+'</td><td>\u00a3'+months[k].used.toFixed(2)+'</td><td>'+(months[k].topups>0?'\u00a3'+months[k].topups.toFixed(2):'&mdash;')+'</td><td>'+netStr+'</td></tr>';
+  });
+  el.innerHTML=html+'</tbody></table>';
+}
+
+// ── History ───────────────────────────────────────────────
+function renderHistory() {
+  const entries = loadEntries();
+  const el = document.getElementById('history-list');
+  if (!entries.length) {
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">'+icon('clipboard')+'</div><div class="empty-title">No entries yet</div><div class="empty-sub">Your readings will appear here.</div></div>';
+    return;
+  }
+  const sorted=[...entries].sort((a,b)=>parseLocal(b.datetime)-parseLocal(a.datetime));
+  const displayed=showAll?sorted:sorted.slice(0,10);
+  let html='';
+  displayed.forEach((e,i)=>{
+    if (editingId===e.id) { html+=renderEditForm(e); return; }
+    const isTopup=e.type==='topup';
+    const next=i<displayed.length-1?displayed[i+1]:null;
+    let spendNote='';
+    if (next&&!editingId) {
+      const pb=parseFloat(next.balance),cb=parseFloat(e.balance);
+      const hrs=Math.abs((parseLocal(e.datetime)-parseLocal(next.datetime))/3600000);
+      if (cb<pb) {
+        const spent=pb-cb;
+        const rateStr=hrs>0?' \u00b7 \u00a3'+(spent/hrs*24).toFixed(2)+'/day':'';
+        spendNote='<div class="spend-annotation"><div class="spend-line"></div><div class="spend-val">\u2193 \u00a3'+spent.toFixed(2)+' in '+hrs.toFixed(1)+'h'+rateStr+'</div><div class="spend-line"></div></div>';
+      }
+    }
+    const badge=isTopup
+      ?'<span class="pill pill-green" style="font-size:12px;padding:2px 7px">Top-up</span>'
+      :'<span class="pill pill-purple" style="font-size:12px;padding:2px 7px">Reading</span>';
+    html+='<div class="entry-row">'+
+      '<div class="entry-icon '+(isTopup?'topup':'reading')+'">'+(isTopup?icon('bolt'):icon('plug'))+'</div>'+
+      '<div class="entry-body">'+
+        '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">'+
+          '<div class="entry-main">'+(isTopup?'+\u00a3'+parseFloat(e.added).toFixed(2)+' topped up':'\u00a3'+parseFloat(e.balance).toFixed(2)+' on meter')+'</div>'+
+          badge+
+        '</div>'+
+        '<div class="entry-sub">'+fmt(parseLocal(e.datetime))+(isTopup?' \u00b7 After: \u00a3'+parseFloat(e.balance).toFixed(2):'')+
+          (isTopup&&e.debtRecovered!=null?' \u00b7 <span style="color:var(--amber-text)">\u00a3'+parseFloat(e.debtRecovered).toFixed(2)+' to debt</span>':'')+
+        '</div>'+
+      '</div>'+
+      '<div class="entry-actions">'+
+        '<button class="btn-xs" onclick="startEdit('+e.id+')">Edit</button>'+
+        '<button class="btn-xs del" onclick="openModal(\'Remove entry\',\'Delete this entry? Cannot be undone.\',function(){deleteEntry('+e.id+')})">Del</button>'+
+      '</div></div>'+spendNote;
+  });
+  if (sorted.length>10) html+='<button class="btn-show-more" onclick="toggleShowAll()">'+(showAll?'Show less':'Show all '+sorted.length+' entries')+'</button>';
+  el.innerHTML=html;
+}
+
+function renderEditForm(e) {
+  const isTopup=e.type==='topup';
+  const twoCol=isTopup
+    ?'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">'+
+        '<div class="field" style="margin:0"><label>Amount added (\u00a3)</label><input type="number" id="edit-added" value="'+e.added+'" min="0" step="0.01"/></div>'+
+        '<div class="field" style="margin:0"><label>Balance after (\u00a3)</label><input type="number" id="edit-bal" value="'+e.balance+'" min="0" step="0.01"/></div>'+
+      '</div>'
+    :'<div class="field"><label>Meter balance (\u00a3)</label><input type="number" id="edit-bal" value="'+e.balance+'" min="0" step="0.01"/></div>';
+  // §6.2 — expose debtRecovered for correction. Leaving it blank and saving
+  // clears the field entirely, so a wrongly-confirmed debt amount can be
+  // undone without deleting and re-entering the whole top-up.
+  const debtField = isTopup
+    ? '<div class="field"><label>Debt recovered (\u00a3) \u2014 optional</label><input type="number" id="edit-debt" value="'+(e.debtRecovered!=null?e.debtRecovered:'')+'" min="0" step="0.01" placeholder="Leave blank if none"/></div>'
+    : '';
+  return '<div class="edit-card">'+
+    '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'+
+      '<span class="pill '+(isTopup?'pill-green':'pill-purple')+'">'+(isTopup?'Top-up':'Reading')+'</span>'+
+      '<span style="font-size:12px;color:var(--text3)">Editing</span>'+
+    '</div>'+
+    '<div class="field"><label>Date &amp; time</label><input type="datetime-local" id="edit-dt" value="'+e.datetime+'"/></div>'+
+    twoCol+
+    debtField+
+    '<div class="edit-btns">'+
+      '<button class="btn-cancel" onclick="cancelEdit()">Cancel</button>'+
+      '<button class="btn-save" onclick="saveEdit('+e.id+',\''+e.type+'\')">Save</button>'+
+    '</div></div>';
+}
+
+function startEdit(id) { editingId=id; renderHistory(); }
+function cancelEdit() { editingId=null; renderHistory(); }
+function saveEdit(id,type) {
+  const dt=document.getElementById('edit-dt').value;
+  const bal=parseFloat(document.getElementById('edit-bal').value);
+  if (!dt||isNaN(bal)) return;
+  const entries=loadEntries().map(e=>{
+    if (e.id!==id) return e;
+    const u={...e,datetime:dt,balance:bal.toFixed(2)};
+    if (type==='topup'){
+      const a=parseFloat(document.getElementById('edit-added').value); if(!isNaN(a)) u.added=a.toFixed(2);
+      const debtEl=document.getElementById('edit-debt');
+      if (debtEl) {
+        const dRec=parseFloat(debtEl.value);
+        if (!isNaN(dRec) && dRec > 0) u.debtRecovered = dRec.toFixed(2);
+        else delete u.debtRecovered; // blank or zero clears it entirely
+      }
+    }
+    return u;
+  });
+  saveEntries(entries); editingId=null; renderHistory();
+}
+function deleteEntry(id) { saveEntries(loadEntries().filter(e=>e.id!==id)); renderHistory(); }
+function toggleShowAll() { showAll=!showAll; renderHistory(); }
+
+// ── Settings ──────────────────────────────────────────────
+function renderSettings() {
+  const s=loadSettings();
+  const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.value=val; };
+  set('set-lowbal', s.lowBalance||10);
+  set('set-topupremind', s.topupRemind||5);
+  set('set-topupbuffer', s.topupBuffer!==undefined && s.topupBuffer!=='' ? s.topupBuffer : 10);
+  set('set-standing', s.standingCharge||'');
+  set('set-tariff', s.tariff||'');
+}
+
+function exportCSV() {
+  const entries=loadEntries().sort((a,b)=>parseLocal(a.datetime)-parseLocal(b.datetime));
+  const fuelLabel=activeFuel;
+  // §6.2 — Debt Recovered appended as a new trailing column. Appending
+  // (not inserting) keeps old parsers that only read the first five
+  // columns unaffected, and this file's own import already header-sniffs
+  // rather than assuming a fixed column count, so it reads its own output
+  // correctly either way.
+  let csv='Date,Time,Fuel,Type,Amount Added (\u00a3),Balance (\u00a3),Debt Recovered (\u00a3)\n';
+  entries.forEach(e=>{
+    const d=parseLocal(e.datetime);
+    csv+=d.toLocaleDateString('en-GB')+','+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+','+fuelLabel+','+(e.type||'reading')+','+(e.added||'')+','+e.balance+','+(e.debtRecovered||'')+'\n';
+  });
+  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  const a=document.createElement('a'); a.href=url; a.download='meter-readings-'+fuelLabel+'.csv'; a.click(); URL.revokeObjectURL(url);
+  // §7.5 — record the backup timestamp so the 30-day nudge resets, then
+  // re-render so it disappears immediately rather than on the next
+  // unrelated render.
+  localStorage.setItem('meter-last-backup-' + activeFuel, String(Date.now()));
+  if (document.getElementById('page-meter').classList.contains('active')) renderMeter();
+}
+
+// §6.4 — calendar reminder export. iOS gives a web app no reliable local
+// notification path, but a .ics file works entirely offline and needs no
+// permission — one tap adds "Top up electricity" to the calendar on the
+// day the forecast says to act (run-out date minus the topupRemind
+// buffer), with an alarm. Uses an all-day DTSTART;VALUE=DATE rather than
+// a timed DTSTART, which sidesteps timezone-conversion entirely — a
+// common source of off-by-one-day bugs in hand-rolled ICS, and
+// unnecessary precision for "some day you should top up" anyway.
+//
+// Property order matters: RFC 5545 requires VALARM to come after every
+// other VEVENT property, not before — Microsoft's rewritten Outlook
+// parser enforces this strictly and silently drops fields (or the whole
+// event) on files that get it wrong.
+function icsDateStamp(date) {
+  const pad = n => String(n).padStart(2,'0');
+  return date.getFullYear()+pad(date.getMonth()+1)+pad(date.getDate())+'T'+pad(date.getHours())+pad(date.getMinutes())+pad(date.getSeconds())+'Z';
+}
+function icsAllDayDate(date) {
+  const pad = n => String(n).padStart(2,'0');
+  return date.getFullYear()+pad(date.getMonth()+1)+pad(date.getDate());
+}
+function icsEscape(text) {
+  // RFC 5545 §3.3.11 — backslash, semicolon, comma, and newline must be
+  // escaped in text values.
+  return String(text).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+}
+
+function exportReminder() {
+  const entries = loadEntries();
+  const settings = loadSettings();
+  const stats = calcStats(entries, '7d');
+  if (!stats) {
+    openModal('Not enough data', 'Add at least two readings first so there\u2019s a forecast to base a reminder on.', () => {});
+    return;
+  }
+  const topupRemind = parseFloat(settings.topupRemind) || 5;
+  const reminderDate = new Date(stats.runOutDate.getTime() - topupRemind * 86400000);
+  const fuelLabel = activeFuel === 'gas' ? 'gas' : 'electricity';
+  const now = new Date();
+
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Meter Tracker//EN',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    'UID:meter-topup-' + activeFuel + '-' + now.getTime() + '@meter-tracker',
+    'DTSTAMP:' + icsDateStamp(now),
+    'DTSTART;VALUE=DATE:' + icsAllDayDate(reminderDate),
+    'DTEND;VALUE=DATE:' + icsAllDayDate(new Date(reminderDate.getTime() + 86400000)),
+    'SUMMARY:' + icsEscape('Top up ' + fuelLabel),
+    'DESCRIPTION:' + icsEscape('Based on your usage, your ' + fuelLabel + ' meter is projected to run out around ' + fmt(stats.runOutDate) + '. Top up with ' + topupRemind + ' day' + (topupRemind===1?'':'s') + ' to spare.'),
+    'STATUS:CONFIRMED',
+    'BEGIN:VALARM',
+    'ACTION:DISPLAY',
+    'DESCRIPTION:' + icsEscape('Top up ' + fuelLabel),
+    'TRIGGER:PT0S',
+    'END:VALARM',
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ];
+  // RFC 5545 requires CRLF line endings.
+  const ics = lines.join('\r\n');
+  const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = 'top-up-' + activeFuel + '-reminder.ics'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importCSV(input) {
+  const file=input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    const lines=e.target.result.split('\n').filter(l=>l.trim());
+    if (!lines.length) return;
+    const header=lines[0].toLowerCase();
+    if (!header.includes('date')||!header.includes('balance')) {
+      openModal('Import failed','Not a valid meter CSV.',()=>{});
+      return;
+    }
+    // §1/§6.2 — header-index lookup rather than a fixed column count, so
+    // any combination of optional columns (Fuel, Debt Recovered, and
+    // whatever gets added next) is read correctly without a combinatorial
+    // branch per column. Old 5-column files from before the Fuel column
+    // existed, current 6-column files, and future 7-column files with
+    // Debt Recovered all parse through the same path.
+    const cols=lines[0].split(',').map(c=>c.trim().toLowerCase());
+    const idxDate = cols.indexOf('date');
+    const idxTime = cols.indexOf('time');
+    const idxFuel = cols.indexOf('fuel');
+    const idxType = cols.findIndex(c=>c==='type');
+    const idxAdded = cols.findIndex(c=>c.startsWith('amount added'));
+    const idxBalance = cols.findIndex(c=>c.startsWith('balance'));
+    const idxDebt = cols.findIndex(c=>c.startsWith('debt recovered'));
+    const minCols = Math.max(idxDate,idxTime,idxType,idxAdded,idxBalance) + 1;
+
+    const existing=loadEntries();
+    const existingKeys=new Set(existing.map(e=>e.datetime+'|'+e.balance));
+    let added=0;
+    for (let i=1;i<lines.length;i++){
+      const row=lines[i].split(',').map(c=>c.trim());
+      if (row.length<minCols) continue;
+      const date = row[idxDate];
+      const time = idxTime>=0 ? row[idxTime] : '';
+      const fuel = idxFuel>=0 ? row[idxFuel] : '';
+      const type = idxType>=0 ? row[idxType] : 'reading';
+      const addedAmt = idxAdded>=0 ? row[idxAdded] : '';
+      const balance = idxBalance>=0 ? row[idxBalance] : '';
+      const debtAmt = idxDebt>=0 ? row[idxDebt] : '';
+      // Skip rows for the other fuel if a Fuel column is present
+      if (idxFuel>=0 && fuel && fuel !== activeFuel) continue;
+      if (!date||!balance) continue;
+      const parts=date.split('/');
+      if (parts.length!==3) continue;
+      const dt=parts[2]+'-'+parts[1].padStart(2,'0')+'-'+parts[0].padStart(2,'0')+'T'+(time||'00:00');
+      const bal=parseFloat(balance);
+      if (isNaN(bal)) continue;
+      const key=dt+'|'+bal.toFixed(2);
+      if (existingKeys.has(key)) continue;
+      const entry={id:Date.now()+i,type:type||'reading',datetime:dt,balance:bal.toFixed(2)};
+      if ((type==='topup')&&addedAmt){ const a=parseFloat(addedAmt); if(!isNaN(a)) entry.added=a.toFixed(2); }
+      if ((type==='topup')&&debtAmt){ const dRec=parseFloat(debtAmt); if(!isNaN(dRec)&&dRec>0) entry.debtRecovered=dRec.toFixed(2); }
+      existing.push(entry); existingKeys.add(key); added++;
+    }
+    saveEntries(existing); input.value='';
+    openModal('Import complete',added+' new entries imported (duplicates skipped).',()=>{ showPage('history'); });
+  };
+  reader.readAsText(file);
+}
+
+function doReset() { localStorage.removeItem(entriesKey()); showPage('meter'); }
+
+function openModal(title,msg,onConfirm) {
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-msg').textContent=msg;
+  document.getElementById('modal-ok').onclick=()=>{ onConfirm(); closeModal(); };
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+function submitManualTopup() {
+  const dt=document.getElementById('tu-dt').value;
+  const added=document.getElementById('tu-added').value;
+  const after=document.getElementById('tu-after').value;
+  const errEl=document.getElementById('tu-err');
+  errEl.style.display='none';
+  if (!dt||!added||!after) { errEl.textContent='Please fill in all fields.'; errEl.style.display='block'; return; }
+  const addedVal=parseFloat(added),afterVal=parseFloat(after);
+  if (isNaN(addedVal)||addedVal<=0) { errEl.textContent='Enter a valid amount added.'; errEl.style.display='block'; return; }
+  if (isNaN(afterVal)||afterVal<0) { errEl.textContent='Enter a valid balance.'; errEl.style.display='block'; return; }
+  const entries=loadEntries();
+
+  // §6.2 — find whichever entry chronologically precedes this new one, since
+  // a manual/backdated top-up isn't necessarily right after the most recent
+  // entry in the array. No prior reading at all (first-ever entry) means
+  // there's nothing to reconcile against, so skip the check in that case.
+  const priorEntries = entries.filter(e => e.balance != null && parseLocal(e.datetime) < parseLocal(dt))
+    .sort((a,b) => parseLocal(b.datetime) - parseLocal(a.datetime));
+  const prevBal = priorEntries.length ? parseFloat(priorEntries[0].balance) : null;
+
+  const newEntry = {id:Date.now(),type:'topup',datetime:dt,balance:afterVal.toFixed(2),added:addedVal.toFixed(2)};
+  entries.push(newEntry);
+  saveEntries(entries);
+  document.getElementById('tu-dt').value=toInputVal(new Date());
+  document.getElementById('tu-added').value='';
+  document.getElementById('tu-after').value='';
+
+  if (prevBal != null) {
+    maybeOfferDebtReconciliation(newEntry.id, prevBal, addedVal, afterVal);
+  }
+  renderHistory();
+}
+
+// ── Migration: copy data from old storage keys to new fuel-aware keys ────────
+(function migrate() {
+  const OLD_ENTRIES = 'meter-v4';
+  const OLD_SETTINGS = 'meter-settings-v4';
+  const NEW_ENTRIES = 'meter-entries-electricity';
+  const NEW_SETTINGS = 'meter-settings-electricity';
+  // Only migrate if old data exists AND new key is empty
+  try {
+    const oldEntries = localStorage.getItem(OLD_ENTRIES);
+    const newEntries = localStorage.getItem(NEW_ENTRIES);
+    if (oldEntries && !newEntries) {
+      localStorage.setItem(NEW_ENTRIES, oldEntries);
+      console.log('Migrated entries from', OLD_ENTRIES, 'to', NEW_ENTRIES);
+    }
+    const oldSettings = localStorage.getItem(OLD_SETTINGS);
+    const newSettings = localStorage.getItem(NEW_SETTINGS);
+    if (oldSettings && !newSettings) {
+      localStorage.setItem(NEW_SETTINGS, oldSettings);
+      console.log('Migrated settings from', OLD_SETTINGS, 'to', NEW_SETTINGS);
+    }
+  } catch(err) { console.warn('Migration error:', err); }
+})();
+
+applyFuelTheme();
+updateTimestamp();
+setInterval(updateTimestamp, 30000);
+
+// §7.5 — request persistent storage so the browser is less likely to
+// evict this origin's data under storage pressure. Best-effort: the
+// browser may not honour it, and per the research behind this feature,
+// iOS's real-world protection here is limited regardless — this is one
+// layer of several, not a guarantee on its own.
+if (navigator.storage && navigator.storage.persist) {
+  navigator.storage.persist().catch(() => {});
+}
+
+// §7.5 — restore-from-mirror check. Runs once at boot, after the normal
+// synchronous init, and only prompts if there's a genuine reason to:
+// localStorage has nothing for a fuel but the IndexedDB mirror does.
+// This is the actual payoff of the background mirroring above — without
+// it, the mirror would just be write-only insurance nobody ever reads
+// back. Checks both fuels since a wipe affects both key sets equally.
+async function checkForRestoreOpportunity() {
+  const fuels = ['electricity', 'gas'];
+  const recoverable = [];
+  for (const fuel of fuels) {
+    const localKey = 'meter-entries-' + fuel;
+    const localData = localStorage.getItem(localKey);
+    const hasLocal = localData && JSON.parse(localData).length > 0;
+    if (hasLocal) continue; // nothing missing for this fuel, nothing to restore
+    const mirrored = await idbGet(localKey);
+    if (mirrored && Array.isArray(mirrored) && mirrored.length > 0) {
+      // Captured here, not re-fetched in the confirm callback below — this
+      // also sidesteps a real bug: openModal's onConfirm is called without
+      // an await, so an async callback that still had work left to do
+      // (like another idbGet) would race against closeModal() and could
+      // leave the restore incomplete when the modal closes.
+      recoverable.push({ fuel, localKey, count: mirrored.length, data: mirrored });
+    }
+  }
+  if (!recoverable.length) return;
+  const summary = recoverable.map(r => r.count + ' ' + r.fuel + ' reading' + (r.count===1?'':'s')).join(' and ');
+  openModal(
+    'Restore from backup?',
+    'Your saved readings appear to be missing, but a background backup found ' + summary + '. Restore it?',
+    () => {
+      recoverable.forEach(r => localStorage.setItem(r.localKey, JSON.stringify(r.data)));
+      renderMeter();
+      if (document.getElementById('page-history').classList.contains('active')) renderHistory();
+    }
+  );
+}
+checkForRestoreOpportunity();
+
+// §7.5 — passive backup nudge. "You haven't backed up in 30 days" with
+// one-tap export, tracked via a timestamp updated whenever exportCSV()
+// runs. This is the fix that actually addresses the most likely
+// real-world cause of data loss found during the research for this
+// feature (Safari's 7-day script-writable-storage cap after inactivity)
+// — it gets the data out of the browser entirely, independent of which
+// storage API is involved.
+// §7.5 — passive backup nudge, as pure HTML so it composes correctly
+// with renderMeter's own alert banner rather than fighting over the same
+// element from two different code paths. This is the fix that actually
+// addresses the most likely real-world cause of data loss found during
+// the research for this feature (Safari's 7-day script-writable-storage
+// cap after inactivity) — it gets the data out of the browser entirely,
+// independent of which storage API is involved.
+// §6.9 — compare-to-usual, rendered to match the doc's own example
+// phrasing exactly ("This week: £12.04 — that's £2.40 more than your
+// usual week"). Silent (empty string) rather than a placeholder message
+// when there isn't yet enough history — matching how every other
+// data-dependent feature in this app behaves when it doesn't have
+// enough to say something honest.
+function compareToUsualHTML(entries, referenceDate) {
+  const cmp = calcCompareToUsual(entries, referenceDate);
+  if (!cmp) return '';
+  const absDiff = Math.abs(cmp.diff);
+  if (absDiff < 0.05) {
+    return '<div style="font-size:13px;color:var(--text2);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">This week: \u00a3'+cmp.thisWeek.toFixed(2)+' \u2014 right about your usual week</div>';
+  }
+  const dir = cmp.diff > 0 ? 'more' : 'less';
+  const dirColour = cmp.diff > 0 ? 'var(--red-text)' : 'var(--green-text)';
+  return '<div style="font-size:13px;color:var(--text2);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">'+
+    'This week: \u00a3'+cmp.thisWeek.toFixed(2)+' \u2014 that\u2019s <strong style="color:'+dirColour+'">\u00a3'+absDiff.toFixed(2)+' '+dir+'</strong> than your usual week</div>';
+}
+
+function backupNudgeHTML() {
+  const lastBackup = parseInt(localStorage.getItem('meter-last-backup-' + activeFuel) || '0', 10);
+  const daysSince = lastBackup ? (Date.now() - lastBackup) / 86400000 : Infinity;
+  if (loadEntries().length === 0 || daysSince < 30) return '';
+  const message = lastBackup ? "You haven't backed up in " + Math.floor(daysSince) + ' days' : "You've never backed up";
+  return '<div class="alert-banner warn backup-nudge"><div class="alert-icon warn">' + icon('warning') + '</div>' +
+    '<div><div class="alert-main warn">' + message + '</div>' +
+    '<div class="alert-sub"><a href="#" onclick="exportCSV();return false;" style="color:inherit;text-decoration:underline">Export a CSV backup now</a></div></div></div>';
+}
+
+// §6.5 — reading freshness prompt. lastReadingDate is compared against
+// genuine wall-clock now, not the app's usual "last reading = now"
+// convention used for forecasting elsewhere — that convention exists to
+// make forecasts honest about what data they had, but this specific
+// message is about how stale the data itself has become, so it needs
+// the real present moment or it would always read "0 days ago".
+function freshnessPromptHTML(lastReadingDate) {
+  const daysSince = (Date.now() - lastReadingDate.getTime()) / 86400000;
+  if (daysSince < 2) return ''; // recent enough that saying anything would just be noise
+  const days = Math.floor(daysSince);
+  const dayWord = days === 1 ? 'day' : 'days';
+  if (daysSince >= 5) {
+    return '<div class="alert-banner danger"><div class="alert-icon danger">' + icon('warning') + '</div>' +
+      '<div><div class="alert-main danger">Last reading ' + days + ' ' + dayWord + ' ago \u2014 the forecast is losing accuracy</div>' +
+      '<div class="alert-sub">Add a reading above to bring it back on track</div></div></div>';
+  }
+  // Soft line below the escalation threshold — plain text, not a banner,
+  // per the doc's own framing.
+  return '<div style="font-size:12px;color:var(--text3);padding:4px 2px 0">Last reading ' + days + ' ' + dayWord + ' ago \u2014 add one to keep the forecast accurate.</div>';
+}
+
+// Wire file input via addEventListener for mobile compatibility
+document.addEventListener('DOMContentLoaded', function() {
+  const fileInput = document.getElementById('csv-import');
+  if (fileInput) {
+    fileInput.addEventListener('change', function() {
+      importCSV(this);
+    });
+  }
+});
+
+renderMeter();
+
+// §7.1 — width="100%" on the SVG (set in svgOpen) handles the immediate
+// visual scaling smoothly during a rotation, but the viewBox's own
+// aspect ratio is still whatever svgW() returned at the last render, so
+// without this the chart stretches proportionally rather than genuinely
+// gaining more horizontal room to show data. Debounced so a drag-resize
+// (or a flurry of orientation-change events some browsers fire) doesn't
+// re-render on every intermediate frame.
+let resizeDebounce = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeDebounce);
+  resizeDebounce = setTimeout(() => {
+    if (document.getElementById('page-insights').classList.contains('active')) {
+      renderInsights();
+    }
+  }, 200);
+});
+
+// Register service worker for offline capability. Silently no-ops if the
+// file is opened via file:// (no SW support there) or sw.js isn't present
+// alongside meter-tracker.html — the app still runs fully without it.
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      // Offline-first app works without the SW too; just no install-to-cache.
+    });
+  });
+}
+</script>
+<!-- Hidden file input — lives outside all overlays for mobile compat -->
+<input type="file" id="csv-import" accept=".csv" style="display:none" />
+</body>
+</html>
