@@ -1,6 +1,6 @@
 // Meter Tracker service worker — cache-first, offline-capable.
 // Bump CACHE_NAME when shipping a new version so old caches get cleared.
-const CACHE_NAME = 'meter-tracker-v3.5';
+const CACHE_NAME = 'meter-tracker-v4.3';
 const APP_SHELL = [
   './meter-tracker.html',
   './manifest.webmanifest'

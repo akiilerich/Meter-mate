@@ -55,7 +55,7 @@
     /* Icon-only header buttons sit on a coloured background where the
        purple outline would have poor contrast against the header itself
        — white outline reads correctly there instead. */
-    .hdr-btn:focus-visible, .fuel-btn:focus-visible {
+    .hdr-btn:focus-visible {
       outline: 2px solid #fff;
       outline-offset: 2px;
     }
@@ -102,11 +102,6 @@
     #meter-header.urgency-healthy{background:linear-gradient(135deg,#2E7C64,#1B6E60);transition:background 0.3s;}
     #meter-header.urgency-low{background:linear-gradient(135deg,#936315,#904F0F);transition:background 0.3s;}
     #meter-header.urgency-critical{background:linear-gradient(135deg,#C05454,#AD3939);transition:background 0.3s;}
-
-    /* Fuel toggle */
-    .fuel-toggle{display:flex;gap:4px;background:rgba(0,0,0,0.15);border-radius:var(--radius-pill);padding:3px;margin-top:14px;align-self:flex-start;}
-    .fuel-btn{border:none;border-radius:var(--radius-pill);background:transparent;color:rgba(255,255,255,0.65);font-family:inherit;font-size:12px;font-weight:600;padding:6px 14px;cursor:pointer;transition:all 0.18s;white-space:nowrap;}
-    .fuel-btn.active{background:rgba(255,255,255,0.22);color:#fff;box-shadow:0 1px 4px rgba(0,0,0,0.15);}
 
     .page-body{padding:16px 16px 0;}
     .card{background:var(--surface);border-radius:var(--radius);padding:16px 18px;margin-bottom:12px;box-shadow:var(--shadow);}
@@ -183,6 +178,18 @@
     .period-btn{flex:1;border:none;border-radius:var(--radius-pill);background:var(--surface2);color:var(--text2);font-family:inherit;font-size:12px;font-weight:600;padding:7px 4px;cursor:pointer;text-align:center;transition:all 0.15s;}
     .period-btn.active{background:var(--grad);color:#fff;box-shadow:0 2px 8px rgba(123,110,246,0.3);}
 
+    /* §5.6 — the shop-trip headline. Uses the brand gradient (not
+       warn/danger red/amber) since this is the app's primary answer, not
+       a warning — it's shown even when nothing is remotely urgent, so it
+       must not look alarming by default. */
+    .shop-trip-headline{
+      border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:14px;
+      background:var(--grad);color:#fff;
+    }
+    .shop-trip-headline .headline-label{font-size:11px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;opacity:0.85;margin-bottom:4px;}
+    .shop-trip-headline .headline-main{font-size:19px;font-weight:800;letter-spacing:-0.01em;}
+    .shop-trip-headline .headline-sub{font-size:13px;opacity:0.9;margin-top:2px;}
+
     /* Alert banner */
     .alert-banner{border-radius:var(--radius-sm);padding:12px 14px;display:flex;align-items:center;gap:10px;margin-bottom:14px;}
     .alert-banner.warn{background:#FEF6E6;border:1px solid #F5A62344;}
@@ -217,12 +224,36 @@
     .quick-input-row input::placeholder{color:var(--text3);font-weight:500;font-size:18px;}
     .quick-save-btn{background:var(--grad);border:none;color:#fff;font-family:inherit;font-size:14px;font-weight:700;padding:0 20px;cursor:pointer;height:54px;flex-shrink:0;transition:opacity 0.15s;}
     .quick-save-btn:active{opacity:0.85;}
+    /* §5.1/§5.2(a) — multi-fuel save buttons sit below the field rather
+       than inline with it (there are two now; inline would crowd the
+       input on a 480px column), and are genuinely visually distinct —
+       fuel colour + icon each — rather than two identical grey
+       rectangles, per the doc's explicit "twins" warning. */
+    .quick-save-buttons-row{display:flex;gap:10px;margin-top:10px;}
+    .quick-save-fuel-btn{
+      flex:1;border:none;border-radius:var(--radius-sm);color:#fff;font-family:inherit;
+      font-size:14px;font-weight:700;padding:13px 10px;cursor:pointer;transition:opacity 0.15s;
+      display:flex;align-items:center;justify-content:center;gap:7px;
+    }
+    .quick-save-fuel-btn:active{opacity:0.85;}
+    .quick-save-fuel-btn.fuel-electricity{background:linear-gradient(135deg,#5C52B8,#4475B8);}
+    .quick-save-fuel-btn.fuel-gas{background:linear-gradient(135deg,#936315,#903F3F);}
     .quick-meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
     .quick-meta span{font-size:12px;color:var(--text3);}
     .quick-adjust-btn{background:none;border:none;color:var(--purple);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0;}
     .quick-dt-row{max-height:0;overflow:hidden;transition:max-height 0.2s ease;}
     .quick-dt-row.open{max-height:60px;}
     .quick-dt-input{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:9px 12px;font-size:14px;font-family:inherit;outline:none;margin-top:8px;}
+    /* Phase 6.5 §5.1 — Insights fuel selector. A segmented control (one
+       bordered pill, two internal segments) rather than period-btn's
+       "row of separate equal rectangles" shape, so the two controls are
+       visually distinguishable as different kinds of choice even before
+       reading either one. Active segment fills with that fuel's own
+       colour, inactive segments stay neutral. */
+    .insights-fuel-select{display:inline-flex;border:1.5px solid var(--border);border-radius:var(--radius-pill);padding:3px;gap:3px;background:var(--surface2);}
+    .insights-fuel-seg{border:none;border-radius:var(--radius-pill);background:transparent;color:var(--text2);font-family:inherit;font-size:13px;font-weight:600;padding:7px 16px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:all 0.15s;}
+    .insights-fuel-seg.active.fuel-electricity{background:linear-gradient(135deg,#5C52B8,#4475B8);color:#fff;}
+    .insights-fuel-seg.active.fuel-gas{background:linear-gradient(135deg,#936315,#903F3F);color:#fff;}
     .quick-warn{font-size:12px;color:var(--amber-text);font-weight:600;background:#F5A62315;border-radius:6px;padding:6px 10px;margin-top:8px;display:none;}
 
     /* Form fields */
@@ -328,15 +359,26 @@
       display:none; position:fixed; left:50%; bottom:78px; transform:translateX(-50%) translateY(0);
       background:var(--text); color:var(--surface); border-radius:var(--radius-pill);
       padding:12px 8px 12px 18px; box-shadow:0 8px 24px rgba(0,0,0,0.25);
-      z-index:150; align-items:center; gap:14px; max-width:calc(100% - 32px);
+      z-index:150; max-width:calc(100% - 32px);
       font-size:14px; font-weight:600; animation:toastIn 0.2s ease;
+      flex-direction:column; gap:6px;
     }
     .toast.open{display:flex;}
+    .toast.has-trend{border-radius:var(--radius-sm);}
+    .toast-row{display:flex;align-items:center;gap:14px;}
+    /* §6.1-6.4 — trend line. Deliberately NOT styled like a warning: no
+       icon, --text2 (a muted grey, not amber/red), same weight as
+       ordinary body text. On a prepay meter "you're using more" can
+       already read as a scolding about money without any help from
+       alarming styling — this is meant to read like a plain meter
+       reading, high or low given equal visual billing. */
+    .toast-trend{font-size:12px;font-weight:500;color:var(--text2);padding-left:4px;}
+    .dark .toast-trend{color:var(--text3);}
     @keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(10px);}to{opacity:1;transform:translateX(-50%) translateY(0);}}
     .toast #toast-undo-btn{
       background:rgba(255,255,255,0.15); border:none; color:var(--surface);
       font-family:inherit; font-size:13px; font-weight:700; border-radius:var(--radius-pill);
-      padding:7px 14px; cursor:pointer; flex-shrink:0;
+      padding:7px 14px; cursor:pointer; flex-shrink:0; margin-left:auto;
     }
     .dark .toast{background:var(--surface2); color:var(--text); box-shadow:0 8px 24px rgba(0,0,0,0.5);}
     .dark .toast #toast-undo-btn{background:rgba(123,110,246,0.25); color:var(--purple);}
@@ -402,10 +444,6 @@
           <div class="page-eyebrow" id="meter-eyebrow">Electric Meter</div>
           <div class="page-title">Meter</div>
           <div id="meter-page-sub" style="font-size:12px;color:rgba(255,255,255,0.65);margin-top:3px;font-weight:500"></div>
-          <div class="fuel-toggle">
-            <button id="fuel-elec" class="fuel-btn active" onclick="switchFuel('electricity')"><svg viewBox="0 0 20 20" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.15em"><path d="M11 1 3.5 11.5h4.8L8 19l8.5-11.5h-4.8L11 1Z"/></svg> Electricity</button>
-            <button id="fuel-gas" class="fuel-btn" onclick="switchFuel('gas')"><svg viewBox="0 0 20 20" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.15em"><path d="M10 1c1 3-2.5 4-2.5 7.2A2.5 2.5 0 0 0 10 10.7a2 2 0 0 0 2-2c1.8 1.3 3 3.4 3 5.6A5 5 0 0 1 5 14.3C5 9 10 8 10 1Z"/></svg> Gas</button>
-          </div>
         </div>
         <div class="header-actions">
           <button class="hdr-btn" onclick="toggleTheme()" id="theme-btn" aria-label="Switch to dark theme"><svg viewBox="0 0 20 20" width="1em" height="1em" fill="currentColor" style="vertical-align:-0.15em"><path d="M14.5 12.7A6.7 6.7 0 0 1 7.3 5.5c0-.7.1-1.4.3-2A7.2 7.2 0 1 0 16.5 12.4c-.6.2-1.3.3-2 .3Z"/></svg></button>
@@ -417,9 +455,15 @@
         <div class="quick-label" id="quick-label">Electricity meter balance</div>
         <div class="quick-input-row">
           <div class="quick-pound">&#163;</div>
-          <input type="text" inputmode="decimal" id="q-amt" placeholder="0.00" onkeydown="if(event.key==='Enter')quickSave()" />
-          <button class="quick-save-btn" onclick="quickSave()">Save</button>
+          <input type="text" inputmode="decimal" id="q-amt" placeholder="0.00" onkeydown="if(event.key==='Enter')quickSaveDefault()" />
         </div>
+        <!-- §5.1/§5.2(a) — populated dynamically by renderQuickSaveButtons()
+             since the count and layout depend on trackedFuels(). Single-fuel
+             renders exactly one button identical to the pre-Phase-6 markup;
+             multi-fuel renders two visually distinct buttons (fuel colour +
+             icon, not grey twins) so a mis-tap is a real, avoidable choice
+             rather than a coin-flip between identical rectangles. -->
+        <div id="quick-save-buttons"></div>
         <div class="quick-meta">
           <span id="q-ts"></span>
           <button id="q-adjust-btn" class="quick-adjust-btn" onclick="toggleAdjustTime()">Adjust time &#9662;</button>
@@ -428,7 +472,9 @@
           <input type="datetime-local" id="q-dt" class="quick-dt-input" />
         </div>
         <div id="q-datewarn" class="quick-warn"><svg viewBox="0 0 20 20" width="0.85em" height="0.85em" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.1em"><path d="M10 2.5 18 16.5H2L10 2.5Z"/><path d="M10 8v3.4"/><circle cx="10" cy="13.8" r="0.15" fill="currentColor" stroke="none"/></svg> Earlier than your last entry &#8212; check the date.</div>
+        <div id="q-already-logged" class="quick-warn" style="color:var(--text3);background:transparent;display:none"></div>
       </div>
+      <div id="shop-trip-headline"></div>
       <div id="meter-alert" aria-live="assertive"></div>
       <div id="meter-stats" aria-live="polite"></div>
     </div>
@@ -438,10 +484,16 @@
   <div class="page" id="page-insights">
     <div class="page-header">
       <div class="page-header-row">
-        <div><div class="page-eyebrow">Electric Meter</div><div class="page-title">Insights</div></div>
+        <div><div class="page-eyebrow" id="insights-eyebrow">Electric Meter</div><div class="page-title">Insights</div></div>
       </div>
     </div>
     <div class="page-body">
+      <!-- Phase 6.5 §5.1 — fuel selector. Deliberately NOT styled like
+           the period pills below it: carries fuel icons/colours and
+           sits in its own row with spacing apart from the period-row,
+           so it reads as "what am I looking at" rather than a second
+           "over what window" control. Hidden in single-fuel mode. -->
+      <div id="insights-fuel-row" style="display:none;margin-bottom:14px"></div>
       <div class="period-row" id="insights-periods"></div>
       <div class="card" id="insights-summary"></div>
       <div class="card" id="insights-moved-stats"></div>
@@ -480,12 +532,25 @@
     </div>
   </div>
   <div class="page-body">
+    <!-- Phase 6.5 §4.1 — filter chips (All/Electricity/Gas), reusing the
+         existing period-row/period-btn component per spec rather than a
+         new visual pattern. Hidden entirely in single-fuel mode. -->
+    <div class="period-row" id="history-filter-row" style="display:none"></div>
     <div class="gear-section-title">Reading history</div>
     <div class="card" id="history-list"></div>
 
     <div class="gear-section-title">Log a top-up manually</div>
     <div class="card">
       <div style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.5">Use this to backdate a top-up or add one that was not auto-detected.</div>
+      <!-- §5.7 audit finding — with activeFuel now fixed permanently at
+           'electricity' (the toggle that used to change it is gone), this
+           form needs its own explicit fuel choice or it could never log a
+           gas top-up at all. Hidden in single-fuel mode, where there's
+           nothing to choose. -->
+      <div class="field" id="tu-fuel-field" style="display:none">
+        <label>Meter</label>
+        <select id="tu-fuel" class="settings-input" style="width:100%;text-align:left"></select>
+      </div>
       <div class="field"><label>Date &amp; time</label><input type="datetime-local" id="tu-dt" /></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="field" style="margin-bottom:0"><label>Amount added (&#163;)</label><input type="number" id="tu-added" min="0" step="0.01" placeholder="50.00" /></div>
@@ -504,34 +569,29 @@
     </div>
   </div>
   <div class="page-body">
-    <div class="gear-section-title">Settings</div>
+    <div class="gear-section-title">Meters I track</div>
+    <div class="card" id="settings-tracked-fuels"></div>
+
+    <!-- §4.3 — per-fuel settings (standing charge, tariff, low balance,
+         top-up reminder) render dynamically into this container, one
+         clearly-headed section per tracked fuel, since the number of
+         sections is not fixed markup — it depends on trackedFuels().
+         Single-fuel mode renders exactly one unheaded section here,
+         identical to the pre-Phase-6 layout. -->
+    <div id="settings-per-fuel"></div>
+
+    <div class="gear-section-title">General</div>
     <div class="card">
       <div class="settings-row">
-        <div><div class="settings-label">Low balance warning (&#163;)</div><div class="settings-sub" id="set-lowbal-sub">Alert when balance drops below this</div></div>
-        <input class="settings-input" type="number" id="set-lowbal" min="0" step="0.5" onchange="saveSetting('lowBalance',this.value)" placeholder="10" />
-      </div>
-      <div class="settings-row">
-        <div><div class="settings-label">Top-up reminder (days)</div><div class="settings-sub">Warn when this many days left</div></div>
-        <input class="settings-input" type="number" id="set-topupremind" min="1" step="1" onchange="saveSetting('topupRemind',this.value)" placeholder="5" />
-      </div>
-      <div class="settings-row">
         <div><div class="settings-label">Top-up planner buffer (%)</div><div class="settings-sub">Safety margin added on top of the bare minimum</div></div>
-        <input class="settings-input" type="number" id="set-topupbuffer" min="0" step="1" onchange="saveSetting('topupBuffer',this.value)" placeholder="10" />
-      </div>
-      <div class="settings-row">
-        <div><div class="settings-label">Weekly standing charge (&#163;)</div><div class="settings-sub" id="set-standing-sub">Fixed daily charge expressed weekly</div></div>
-        <input class="settings-input" type="number" id="set-standing" min="0" step="0.01" onchange="saveSetting('standingCharge',this.value)" placeholder="0.00" />
-      </div>
-      <div class="settings-row">
-        <div><div class="settings-label">Tariff rate (p/kWh)</div><div class="settings-sub">Optional &#8212; for energy estimate</div></div>
-        <input class="settings-input" type="number" id="set-tariff" min="0" step="0.1" onchange="saveSetting('tariff',this.value)" />
+        <input class="settings-input" type="number" id="set-topupbuffer" min="0" step="1" onchange="saveGlobalSetting('topupBuffer',this.value)" placeholder="10" />
       </div>
     </div>
 
     <div class="gear-section-title">Data</div>
     <div class="card">
       <div class="settings-row">
-        <div><div class="settings-label">Export to CSV</div><div class="settings-sub">Download all readings</div></div>
+        <div><div class="settings-label">Export to CSV</div><div class="settings-sub" id="export-sub">Download all readings</div></div>
         <button class="btn-setting" onclick="exportCSV()">Export</button>
       </div>
       <div class="settings-row">
@@ -541,7 +601,7 @@
 
       <div class="settings-row">
         <div><div class="settings-label">Reset data</div><div class="settings-sub" id="reset-sub">Delete all readings for this meter</div></div>
-        <button class="btn-setting danger" onclick="openModal('Reset data','Delete all readings for this meter? This cannot be undone.',doReset)">Reset</button>
+        <button class="btn-setting danger" onclick="openModal('Reset data','Delete all readings for every tracked meter? This cannot be undone.',doReset)">Reset</button>
       </div>
     </div>
 
@@ -554,7 +614,7 @@
         <li>ACE9000 prepayment meter (British Gas)</li>
       </ul>
     </div>
-    <div class="version-tag">v3.5 &#183; ACE9000 &#183; British Gas</div>
+    <div class="version-tag">v4.3 &#183; ACE9000 &#183; British Gas</div>
   </div>
 </div>
 
@@ -617,8 +677,11 @@
 
 <!-- SAVE TOAST — §7.3 -->
 <div class="toast" id="save-toast" role="status" aria-live="polite">
-  <span id="toast-msg"></span>
-  <button id="toast-undo-btn" onclick="undoLastSave()">Undo</button>
+  <div class="toast-row">
+    <span id="toast-msg"></span>
+    <button id="toast-undo-btn" onclick="undoLastSave()">Undo</button>
+  </div>
+  <div class="toast-trend" id="toast-trend" style="display:none"></div>
 </div>
 
 <!-- MODAL -->
@@ -710,23 +773,86 @@ async function idbGet(key) {
   } catch (err) { return undefined; }
 }
 
-// ── Storage — fuel-aware ──────────────────────────────────
-function entriesKey() { return 'meter-entries-' + activeFuel; }
-function settingsKey() { return 'meter-settings-' + activeFuel; }
-function loadEntries() { try { return JSON.parse(localStorage.getItem(entriesKey()) || '[]'); } catch { return []; } }
-function saveEntries(e) {
-  localStorage.setItem(entriesKey(), JSON.stringify(e));
-  idbSet(entriesKey(), e); // fire-and-forget background mirror
+// ── §2/§3 — tracked fuels + fuel-aware storage refactor ────
+// Fuel becomes an explicit optional parameter on every storage function,
+// defaulting to activeFuel so every existing call site keeps compiling
+// and behaving identically until it's deliberately updated to pass a
+// real fuel — per the doc's explicit design ("existing call sites keep
+// working during the refactor").
+function trackedFuels() {
+  try {
+    const v = JSON.parse(localStorage.getItem('meter-tracked-fuels') || 'null');
+    if (Array.isArray(v) && v.length) return v;
+  } catch {}
+  return ['electricity'];
 }
-function loadSettings() { try { return JSON.parse(localStorage.getItem(settingsKey()) || '{}'); } catch { return {}; } }
-function saveSettings(s) {
-  localStorage.setItem(settingsKey(), JSON.stringify(s));
-  idbSet(settingsKey(), s); // fire-and-forget background mirror
+function isMultiFuel() { return trackedFuels().length > 1; }
+
+// Runs once at boot (called from the init sequence below). If the
+// tracked-fuels setting has never been written, infer it from whether
+// gas has any real data — exactly per the doc's spec — then persist the
+// inferred value so this inference only ever runs the one time.
+function inferTrackedFuelsIfNeeded() {
+  if (localStorage.getItem('meter-tracked-fuels') != null) return; // already set, nothing to infer
+  let gasHasData = false;
+  try {
+    const gasRaw = localStorage.getItem('meter-entries-gas');
+    gasHasData = !!(gasRaw && JSON.parse(gasRaw).length > 0);
+  } catch {}
+  const inferred = gasHasData ? ['electricity', 'gas'] : ['electricity'];
+  localStorage.setItem('meter-tracked-fuels', JSON.stringify(inferred));
 }
-function saveSetting(k, v) {
-  const s = loadSettings();
+
+// ── Global settings (not per-fuel) ─────────────────────────
+// Currently just topupBuffer — per §4.3, the one setting the doc
+// classifies as global rather than per-fuel. A separate top-level key,
+// consistent with how meter-tracked-fuels is itself a standalone global
+// key rather than nested inside any per-fuel blob.
+function loadGlobalSettings() { try { return JSON.parse(localStorage.getItem('meter-global-settings') || '{}'); } catch { return {}; } }
+function saveGlobalSettings(s) {
+  localStorage.setItem('meter-global-settings', JSON.stringify(s));
+  idbSet('meter-global-settings', s);
+}
+function saveGlobalSetting(k, v) {
+  const s = loadGlobalSettings();
   s[k] = parseFloat(v) || 0;
-  saveSettings(s);
+  saveGlobalSettings(s);
+}
+
+// ── Storage — fuel-aware ──────────────────────────────────
+// Phase 6.5 §6 audit: fuel || activeFuel here is correct BY DESIGN. This
+// is the base case every other fallback in the file ultimately defers
+// to — calling loadEntries()/saveEntries() with no argument at all must
+// resolve to something rather than crash, and 'electricity' (activeFuel's
+// permanent value) is the only sane default fuel for genuinely
+// fuel-agnostic legacy code paths.
+function entriesKey(fuel) { return 'meter-entries-' + (fuel || activeFuel); }
+function settingsKey(fuel) { return 'meter-settings-' + (fuel || activeFuel); }
+function loadEntries(fuel) { try { return JSON.parse(localStorage.getItem(entriesKey(fuel)) || '[]'); } catch { return []; } }
+function saveEntries(e, fuel) {
+  localStorage.setItem(entriesKey(fuel), JSON.stringify(e));
+  idbSet(entriesKey(fuel), e); // fire-and-forget background mirror
+}
+function loadSettings(fuel) { try { return JSON.parse(localStorage.getItem(settingsKey(fuel)) || '{}'); } catch { return {}; } }
+function saveSettings(s, fuel) {
+  localStorage.setItem(settingsKey(fuel), JSON.stringify(s));
+  idbSet(settingsKey(fuel), s); // fire-and-forget background mirror
+}
+function saveSetting(k, v, fuel) {
+  const s = loadSettings(fuel);
+  s[k] = parseFloat(v) || 0;
+  saveSettings(s, fuel);
+}
+
+// Returns { electricity: [...], gas: [...] } for tracked fuels only —
+// the shared read path for anything that genuinely needs to see every
+// meter at once (combined export, stacked settings, multi-fuel urgency
+// ranking), rather than each of those features re-implementing its own
+// "loop over trackedFuels() and loadEntries(fuel)" pattern separately.
+function loadAllEntries() {
+  const result = {};
+  trackedFuels().forEach(fuel => { result[fuel] = loadEntries(fuel); });
+  return result;
 }
 
 // ── Icons (§5.3) ──────────────────────────────────────────
@@ -770,6 +896,11 @@ function parseLocal(str) {
 }
 function fmt(date) { return date.toLocaleString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}); }
 function fmtDay(date) { return date.toLocaleDateString('en-GB',{day:'numeric',month:'short'}); }
+// §5.6 — the headline's exact date style ("Fri 3 Oct"), distinct from
+// both fmt (full date+time) and fmtDay (no weekday) above — neither
+// existing formatter includes the weekday the doc's example specifically
+// shows.
+function fmtHeadlineDate(date) { return date.toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'}); }
 function toInputVal(date) {
   const pad = n => String(n).padStart(2,'0');
   return date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate())+'T'+pad(date.getHours())+':'+pad(date.getMinutes());
@@ -780,7 +911,12 @@ function dayKey(date) { const pad=n=>String(n).padStart(2,'0'); return date.getF
 function startOfDay(date) { return new Date(date.getFullYear(),date.getMonth(),date.getDate()); }
 
 // ── Daily usage interpolation ─────────────────────────────
-function calcDailyUsage(entries) {
+// §3 — takes an explicit fuel parameter (defaulting to activeFuel so
+// every existing call site keeps working unchanged) and passes it to
+// loadSettings. This is the doc's single most-flagged risk in the whole
+// phase: without threading fuel through here, calling this for gas would
+// silently read and apply the electricity standing charge instead.
+function calcDailyUsage(entries, fuel) {
   const sorted = [...entries].filter(e => e.balance != null).sort((a,b) => parseLocal(a.datetime)-parseLocal(b.datetime));
   if (sorted.length < 2) return [];
   const days = {};
@@ -836,7 +972,7 @@ function calcDailyUsage(entries) {
   // The deduction carries a running deficit rather than being clamped per
   // day, so a quiet day can't silently swallow part of the standing charge
   // and leave the totals failing to reconcile against the real balance.
-  const s = loadSettings();
+  const s = loadSettings(fuel);
   const sc = parseFloat(s.standingCharge) || 0;
   const dailySC = sc > 0 ? sc / 7 : 0;
   let carry = 0;
@@ -853,10 +989,14 @@ function calcDailyUsage(entries) {
 }
 
 // ── Stats calculation ─────────────────────────────────────
-function calcStats(entries, period) {
-  const daily = calcDailyUsage(entries);
+// §3 — takes an explicit fuel parameter, threaded to both
+// calcDailyUsage and loadSettings so a gas call can never pick up
+// electricity's standing charge or tariff. Matches the doc's exact
+// acceptance signature: calcStats(gasEntries, '7d', 'gas').
+function calcStats(entries, period, fuel) {
+  const daily = calcDailyUsage(entries, fuel);
   if (!daily.length) return null;
-  const settings = loadSettings();
+  const settings = loadSettings(fuel);
   const withBal = [...entries].filter(e => e.balance != null).sort((a,b) => parseLocal(a.datetime)-parseLocal(b.datetime));
   if (!withBal.length) return null;
   const lastEntry = withBal[withBal.length-1];
@@ -961,6 +1101,97 @@ function calcCycleProgress(entries, currentBalance) {
   return { pct, added };
 }
 
+// §5.2(c) — soft mis-tap guard. Compares a newly entered value against
+// that SPECIFIC fuel's own historical balance range, so a value that's
+// wildly plausible for one meter but absurd for the other (the doc's own
+// example: gas has never exceeded £15, £42 just submitted) gets a
+// one-tap confirm instead of saving straight through. Suppressed until
+// 5+ entries exist for the fuel, per the doc's explicit threshold — a
+// "usual range" computed from 1-2 readings isn't meaningful, and would
+// make the very first few entries for a newly-tracked fuel constantly
+// trigger false positives. The multiplier is deliberately generous (2x
+// the historical max) so an unusually large but genuine top-up doesn't
+// nag every time a new all-time high naturally occurs.
+function calcIsOutOfRange(entries, newValue) {
+  const balances = entries.filter(e => e.balance != null).map(e => parseFloat(e.balance)).filter(b => !isNaN(b));
+  if (balances.length < 5) return false;
+  const max = Math.max(...balances);
+  if (max <= 0) return false; // guard against degenerate all-zero history
+  return newValue > max * 2;
+}
+
+// §5.1 — single field stays; the Save button becomes one button
+// (single-fuel, identical markup/behaviour to pre-Phase-6) or two
+// (multi-fuel, each fuel-coloured per §5.2(a)). Rendered into the field
+// row itself when single-fuel — matching the ORIGINAL inline layout
+// exactly — or below the field when multi-fuel, since two buttons
+// inline would crowd a 480px column.
+function renderQuickSaveButtons() {
+  const row = document.querySelector('.quick-input-row');
+  const container = document.getElementById('quick-save-buttons');
+  if (!container) return;
+  const fuels = trackedFuels();
+  if (fuels.length <= 1) {
+    container.innerHTML = '';
+    // Single-fuel: the button lives INSIDE the input row, exactly as it
+    // did before this phase — not in the below-field container at all.
+    if (row && !row.querySelector('.quick-save-btn')) {
+      const btn = document.createElement('button');
+      btn.className = 'quick-save-btn';
+      btn.textContent = 'Save';
+      btn.onclick = () => quickSave(fuels[0]);
+      row.appendChild(btn);
+    }
+  } else {
+    // Multi-fuel: remove any leftover inline button from a prior
+    // single-fuel render, then render the two-button row below the field.
+    const existingInlineBtn = row && row.querySelector('.quick-save-btn');
+    if (existingInlineBtn) existingInlineBtn.remove();
+    container.innerHTML = '<div class="quick-save-buttons-row">' +
+      fuels.map(fuel =>
+        '<button class="quick-save-fuel-btn fuel-'+fuel+'" onclick="quickSave(\''+fuel+'\')">' +
+          icon(fuel === 'gas' ? 'flame' : 'bolt') + ' ' + FUEL_LABELS[fuel] +
+        '</button>'
+      ).join('') +
+    '</div>';
+  }
+}
+
+function quickSaveDefault() { quickSave(trackedFuels()[0]); }
+
+// §5.4 — "already logged today" marker. Pure calculation: for a given
+// fuel's entries, is there anything (reading or top-up) timestamped on
+// today's calendar date, and if so, what's the latest such time. Kept
+// separate from rendering so it's independently testable, matching the
+// pattern every other calc* function in this file follows.
+function calcLoggedToday(entries, referenceDate) {
+  const todayKey = dayKey(referenceDate);
+  const todaysEntries = entries.filter(e => e.balance != null && dayKey(parseLocal(e.datetime)) === todayKey);
+  if (!todaysEntries.length) return null;
+  const latest = todaysEntries.reduce((a,b) => parseLocal(b.datetime) > parseLocal(a.datetime) ? b : a);
+  return parseLocal(latest.datetime);
+}
+
+// Renders the "Electricity ✓ 21:44 · Gas — not yet" line. Multi-fuel
+// only, per the doc — single-fuel mode has no ambiguity about "which
+// meter did I already do" to resolve, so the marker would just be noise.
+function renderLoggedTodayMarker() {
+  const el = document.getElementById('q-already-logged');
+  if (!el) return;
+  const fuels = trackedFuels();
+  if (fuels.length <= 1) { el.style.display = 'none'; return; }
+  const now = new Date();
+  const parts = fuels.map(fuel => {
+    const loggedAt = calcLoggedToday(loadEntries(fuel), now);
+    const label = FUEL_LABELS[fuel];
+    return loggedAt
+      ? label + ' \u2713 ' + loggedAt.toLocaleTimeString('en-GB', {hour:'2-digit', minute:'2-digit'})
+      : label + ' \u2014 not yet';
+  });
+  el.textContent = parts.join(' \u00b7 ');
+  el.style.display = 'block';
+}
+
 // §6.2 — debt/emergency-credit reconciliation. On an ACE9000, dropping
 // below zero puts the meter on emergency credit; the standing charge
 // keeps accruing as debt while off-supply, and that debt is recovered as
@@ -983,8 +1214,8 @@ function calcDebtDiscrepancy(previousBalance, added, balanceAfter) {
 // §6.3 — electricity-only spend aggregated by calendar month. Single
 // source of truth shared by the monthly summary table and the seasonal
 // projection caveat, so the two never disagree about what a month cost.
-function calcMonthlyUsage(entries) {
-  const daily = calcDailyUsage(entries);
+function calcMonthlyUsage(entries, fuel) {
+  const daily = calcDailyUsage(entries, fuel);
   const months = {};
   daily.forEach(d => {
     const k = monthKey(d.date);
@@ -998,8 +1229,8 @@ function calcMonthlyUsage(entries) {
 // this owner until June/July/August 2027, and the caller must fall back
 // to the plain seasonal-warning label in that case rather than pretend a
 // comparison exists.
-function calcYearOverYear(entries, referenceDate) {
-  const months = calcMonthlyUsage(entries);
+function calcYearOverYear(entries, referenceDate, fuel) {
+  const months = calcMonthlyUsage(entries, fuel);
   const thisMonthKey = monthKey(referenceDate);
   const lastYearDate = new Date(referenceDate.getFullYear() - 1, referenceDate.getMonth(), 1);
   const lastYearKey = monthKey(lastYearDate);
@@ -1016,8 +1247,67 @@ function calcYearOverYear(entries, referenceDate) {
 // included this week would be a circular, self-referential comparison
 // that always understates how unusual the current week actually is.
 // Returns null rather than a comparison built on too little history.
-function calcCompareToUsual(entries, referenceDate) {
-  const daily = calcDailyUsage(entries);
+// §6.1-6.3 — trend feedback on save. Two numbers, both gross (§2.1):
+// the NEW gap's own implied daily rate (a two-point calculation between
+// the entry immediately before this save and the entry just saved), and
+// the trailing 7-day average gross rate computed from priorEntries —
+// deliberately the array from BEFORE this save, not including the new
+// entry, so the comparison is "how does this gap compare to what came
+// before it", not a baseline partially made of the very thing being
+// measured against it. Returns null whenever any suppression rule holds
+// (§6.3) — silence is the correct behaviour, not an empty message.
+function calcTrendFeedback(priorEntries, newEntry, fuel) {
+  const sorted = [...priorEntries].filter(e => e.balance != null).sort((a,b) => parseLocal(a.datetime) - parseLocal(b.datetime));
+  if (sorted.length < 5) return null; // no baseline exists yet for this fuel
+  if (newEntry.type === 'topup') return null; // balance jumped for an obvious reason
+
+  const prev = sorted[sorted.length - 1];
+  const gapStartMs = parseLocal(prev.datetime).getTime();
+  const gapEndMs = parseLocal(newEntry.datetime).getTime();
+  const gapHours = (gapEndMs - gapStartMs) / 3600000;
+  if (gapHours < 12) return null;   // too noisy to mean anything
+  if (gapHours > 96) return null;   // too smeared to attribute (4 days)
+  if (gapEndMs <= gapStartMs) return null; // backdated entry landing before its own "previous" reading — not a genuine forward gap
+
+  // The new gap's own implied gross rate — a plain two-point drain, same
+  // sign convention as calcDailyUsage's pair processing (a balance DROP
+  // is spend; a rise with no topup type would be a data anomaly, not a
+  // gap to report a rate for).
+  const pb = parseFloat(prev.balance), cb = parseFloat(newEntry.balance);
+  if (cb >= pb) return null; // balance didn't drop — nothing to compare
+  const gapDays = gapHours / 24;
+  const newGapRate = (pb - cb) / gapDays;
+
+  // Trailing 7-day average gross rate from BEFORE this save.
+  const daily = calcDailyUsage(sorted, fuel);
+  if (daily.length < 5) return null; // not enough days of history to call this a baseline
+  const recent = daily.slice(-7);
+  if (!recent.length) return null;
+  const trailingAvg = recent.reduce((s,d) => s + d.gross, 0) / recent.length;
+  if (trailingAvg <= 0) return null; // no meaningful baseline rate to compare against
+
+  const deviation = (newGapRate - trailingAvg) / trailingAvg;
+  if (Math.abs(deviation) < 0.15) return null; // §6.3 — under ~15%, no "usage up 2%" noise
+
+  // §6.2 — report the consequence (days), not the percentage. Run-out at
+  // the new rate vs run-out at the trailing average, using whatever
+  // balance the meter is AT after this save (newEntry's own balance) as
+  // the shared starting point for both projections, so the only thing
+  // that differs between them is the rate.
+  const remaining = cb;
+  const daysAtNewRate = remaining / newGapRate;
+  const daysAtTrailing = remaining / trailingAvg;
+  const dayDiff = Math.round(daysAtTrailing - daysAtNewRate); // positive = running out sooner (higher usage)
+  if (dayDiff === 0) return null; // §6.3 — rounds to zero, nothing to report
+
+  return {
+    direction: dayDiff > 0 ? 'higher' : 'lower',
+    days: Math.abs(dayDiff),
+  };
+}
+
+function calcCompareToUsual(entries, referenceDate, fuel) {
+  const daily = calcDailyUsage(entries, fuel);
   if (!daily.length) return null;
   function spendInWindow(endMs, days) {
     const startMs = endMs - days*86400000;
@@ -1098,6 +1388,13 @@ let editingId = null;
 let dtAdjustOpen = false;
 let insightsPeriod = '30d';
 let pendingEntry = null;
+// Phase 6.5 — both intentionally module-level only, never localStorage.
+// Per spec: resets to a predictable default every session rather than
+// remembering the last filter/selection, and persists across tab
+// switches within a session (simply because it's a plain variable, not
+// because anything re-reads it from storage).
+let historyFilter = 'all';
+let insightsFuel = null; // resolved to trackedFuels()[0] on first render
 
 const PERIODS = [
   {key:'24h', label:'24h'},
@@ -1107,53 +1404,74 @@ const PERIODS = [
 ];
 
 // ── Fuel switching ────────────────────────────────────────
-function switchFuel(fuel) {
-  if (fuel === activeFuel) return;
-  activeFuel = fuel;
-  document.getElementById('fuel-elec').classList.toggle('active', fuel === 'electricity');
-  document.getElementById('fuel-gas').classList.toggle('active', fuel === 'gas');
-  applyFuelTheme();
-  insightsPeriod = '30d';
-  editingId = null;
-  showAll = false;
-  renderMeter();
-  // Refresh whichever other tab happens to be the active page, since its
-  // fuel-aware labels and data need to reflect the newly selected fuel too.
-  if (document.getElementById('page-insights').classList.contains('active')) renderInsights();
-  if (document.getElementById('page-history').classList.contains('active')) { updateHistoryLabels(); renderHistory(); }
-  if (document.getElementById('page-settings').classList.contains('active')) { updateSettingsLabels(); renderSettings(); }
-}
+// §5.7 — switchFuel deleted here. Its job (letting the user pick which
+// single fuel's data the whole app showed) is now fully covered by
+// §5.1's per-fuel quick-save buttons and §5.5's stacked cards, which
+// show every tracked fuel simultaneously rather than switching between
+// modes at all.
 
+// §5.7 — was gas/electricity-branching based on activeFuel, switched via
+// the now-deleted fuel toggle. With no remaining UI to ever change which
+// branch this takes, and the app-wide gradient (Insights/History/
+// Settings headers, buttons, pills) having no reason to look different
+// depending on which fuel a person happened to view last, this is now a
+// single fixed app-wide gradient. The Meter page's own header colour is
+// driven entirely by the urgency-* classes from §5.1/§5.5 instead, which
+// is genuinely responsive to what's happening rather than a static mode.
 function applyFuelTheme() {
   const root = document.documentElement;
-  // Contrast-corrected (§5.4 re-check) from the original bright
-  // #7B6EF6/#5B9CF6 and #F5A623/#F06A6A, which left white header text
-  // as low as 2.03:1 — essentially unreadable on the gas theme. These
-  // darker tones clear 4.5:1 while staying clearly purple/blue and
-  // amber/red respectively.
-  if (activeFuel === 'gas') {
-    root.style.setProperty('--grad-start', '#936315');
-    root.style.setProperty('--grad-end',   '#903F3F');
-  } else {
-    root.style.setProperty('--grad-start', '#5C52B8');
-    root.style.setProperty('--grad-end',   '#4475B8');
-  }
+  root.style.setProperty('--grad-start', '#5C52B8');
+  root.style.setProperty('--grad-end',   '#4475B8');
 }
 
 function updateHistoryLabels() {
-  const isGas = activeFuel === 'gas';
+  // §5.7 — History is not redesigned for multi-fuel this phase, but with
+  // activeFuel now fixed, the eyebrow can no longer meaningfully claim
+  // one specific fuel in multi-fuel mode.
+  const multi = isMultiFuel();
   const eyebrow = document.getElementById('history-eyebrow');
-  if (eyebrow) eyebrow.textContent = isGas ? 'Gas Meter' : 'Electric Meter';
+  if (eyebrow) eyebrow.textContent = multi ? 'Your Meters' : 'Electric Meter';
+
+  // Phase 6.5 §4.1 — filter chips replace the old single-fuel scope note.
+  // Reuses .period-row/.period-btn, no new visual component. Hidden
+  // entirely in single-fuel mode — no chips, no row markers, identical
+  // to v4.2 for a single-meter owner.
+  const filterRow = document.getElementById('history-filter-row');
+  if (filterRow) {
+    if (multi) {
+      const fuels = trackedFuels();
+      const chips = [{ key: 'all', label: 'All' }].concat(fuels.map(f => ({ key: f, label: FUEL_LABELS[f] })));
+      filterRow.innerHTML = chips.map(c =>
+        '<button class="period-btn'+(historyFilter===c.key?' active':'')+'" onclick="setHistoryFilter(\''+c.key+'\')">'+c.label+'</button>'
+      ).join('');
+      filterRow.style.display = 'flex';
+    } else {
+      filterRow.style.display = 'none';
+    }
+  }
+
+  // Populate the manual top-up fuel selector, shown only when multi-fuel.
+  const fuelField = document.getElementById('tu-fuel-field');
+  const fuelSelect = document.getElementById('tu-fuel');
+  if (fuelField && fuelSelect) {
+    if (multi) {
+      const fuels = trackedFuels();
+      fuelSelect.innerHTML = fuels.map(f => '<option value="'+f+'">'+FUEL_LABELS[f]+'</option>').join('');
+      fuelField.style.display = '';
+    } else {
+      fuelField.style.display = 'none';
+    }
+  }
 }
 
 function updateSettingsLabels() {
-  const isGas = activeFuel === 'gas';
+  // §4.3 — Settings no longer has one "active fuel" mode; it shows every
+  // tracked fuel stacked simultaneously, so the eyebrow is fuel-agnostic
+  // rather than switching between "Electric Meter"/"Gas Meter". The old
+  // set-standing-sub reference is gone too — standing charge is now
+  // rendered per-fuel dynamically with no single fixed element id.
   const eyebrow = document.getElementById('settings-eyebrow');
-  const standingSub = document.getElementById('set-standing-sub');
-  const resetSub = document.getElementById('reset-sub');
-  if (eyebrow) eyebrow.textContent = isGas ? 'Gas Meter' : 'Electric Meter';
-  if (standingSub) standingSub.textContent = isGas ? 'Gas standing charge (weekly)' : 'British Gas electricity standing charge (weekly)';
-  if (resetSub) resetSub.textContent = 'Delete all readings for ' + (isGas ? 'gas' : 'electricity');
+  if (eyebrow) eyebrow.textContent = isMultiFuel() ? 'Your Meters' : 'Electric Meter';
 }
 
 // ── Navigation ────────────────────────────────────────────
@@ -1217,7 +1535,14 @@ function toggleAdjustTime() {
   }
 }
 
-function quickSave() {
+// §5.1/§5.2 — quickSave takes an explicit fuel. Every current UI call
+// site (renderQuickSaveButtons, for both single- and multi-fuel mode)
+// already passes one explicitly — Phase 6.5 §6 audit confirms fuel ||
+// activeFuel here is now a defensive default with no live call site
+// relying on it, kept only so an external or future caller passing no
+// argument fails safe to a real fuel rather than crashing.
+function quickSave(fuel) {
+  fuel = fuel || activeFuel;
   const amtEl = document.getElementById('q-amt');
   const warnEl = document.getElementById('q-datewarn');
   warnEl.style.display = 'none';
@@ -1241,6 +1566,28 @@ function quickSave() {
   const val = parseFloat(raw);
   if (isNaN(val) || val < 0) return;
 
+  // §5.2(c) — soft confirm on a value wildly outside THIS fuel's own
+  // historical range, the mitigation that catches "typed the gas number
+  // into the electricity field" (or vice versa) before it's saved,
+  // rather than after — the range check is fuel-specific, so gas's
+  // narrower typical range is what's being checked here, not some
+  // combined/electricity range.
+  const fuelEntries = loadEntries(fuel);
+  if (calcIsOutOfRange(fuelEntries, val)) {
+    openModal(
+      'That looks unusual for ' + FUEL_LABELS[fuel],
+      '\u00a3' + val.toFixed(2) + ' is well outside ' + FUEL_LABELS[fuel] + '\u2019s usual range. Save it anyway?',
+      () => quickSaveConfirmed(fuel, val)
+    );
+    return;
+  }
+  quickSaveConfirmed(fuel, val);
+}
+
+function quickSaveConfirmed(fuel, val) {
+  const amtEl = document.getElementById('q-amt');
+  const warnEl = document.getElementById('q-datewarn');
+
   // Use adjusted time if open, otherwise now
   let dtStr;
   if (_dtAdjustOpen && document.getElementById('q-dt').value) {
@@ -1249,7 +1596,7 @@ function quickSave() {
     dtStr = toInputVal(new Date());
   }
 
-  const entries = loadEntries();
+  const entries = loadEntries(fuel);
   const sorted = [...entries].filter(e => e.balance != null).sort((a,b) => parseLocal(a.datetime)-parseLocal(b.datetime));
 
   // Date order check
@@ -1258,10 +1605,25 @@ function quickSave() {
   }
 
   const entry = { id: Date.now(), type: 'reading', datetime: dtStr, balance: val.toFixed(2) };
+  // §6.1 — computed against `sorted`, the entries array as it stood
+  // BEFORE this save, not the array with the new entry already in it —
+  // otherwise the trailing average would be partly made of the very gap
+  // being measured against it.
+  const trend = calcTrendFeedback(sorted, entry, fuel);
   entries.push(entry);
-  saveEntries(entries);
-  showSaveToast('Saved \u00b7 \u00a3' + val.toFixed(2), entry.id);
+  saveEntries(entries, fuel);
+  // §5.2(b) — names the destination fuel in the toast. This is the
+  // mitigation that actually matters: it turns a silent mis-tap into a
+  // caught typo, since the person sees which meter it landed on before
+  // the 5-second undo window closes.
+  const toastMsg = isMultiFuel()
+    ? 'Saved \u00a3' + val.toFixed(2) + ' to ' + FUEL_LABELS[fuel]
+    : 'Saved \u00b7 \u00a3' + val.toFixed(2); // single-fuel wording unchanged from pre-Phase-6
+  showSaveToast(toastMsg, entry.id, fuel, trend);
   amtEl.value = '';
+  // §5.3 — keep focus in the field after saving, so logging both meters
+  // is type/tap/type/tap with no navigation in between.
+  amtEl.focus();
   // Reset adjust time
   if (_dtAdjustOpen) {
     _dtAdjustOpen = false;
@@ -1276,9 +1638,9 @@ function quickSave() {
     if (val > prevBal) {
       pendingEntry = entry;
       pendingEntry._prevBal = prevBal; // stashed for debt reconciliation in confirmTopup
+      pendingEntry._fuel = fuel; // §5.2 — confirmTopup must save back to the SAME fuel this reading was saved to, not activeFuel
       const diff = (val - prevBal).toFixed(2);
-      const fuel = activeFuel === 'gas' ? 'gas' : 'electricity';
-      document.getElementById('ts-title').textContent = 'Did you top up your ' + fuel + '?';
+      document.getElementById('ts-title').textContent = 'Did you top up your ' + FUEL_LABELS[fuel].toLowerCase() + '?';
       document.getElementById('ts-msg').textContent = 'Your balance went up by \u00a3' + diff + ' \u2014 did you add credit at a shop?';
       document.getElementById('ts-added').value = '';
       document.getElementById('topup-sheet-bg').classList.add('open');
@@ -1293,13 +1655,18 @@ function quickSave() {
 function confirmTopup() {
   const added = parseFloat(document.getElementById('ts-added').value);
   let entryId = null, prevBal = null, balanceAfter = null;
+  // Phase 6.5 §6 audit: pendingEntry._fuel is always set by
+  // quickSaveConfirmed whenever a save triggers this sheet, so the ||
+  // activeFuel fallback is a defensive guard against an unexpected
+  // missing field, not a path any current save flow actually takes.
+  const fuel = pendingEntry ? (pendingEntry._fuel || activeFuel) : activeFuel;
   if (pendingEntry && !isNaN(added) && added > 0) {
-    const entries = loadEntries();
+    const entries = loadEntries(fuel);
     const idx = entries.findIndex(e => e.id === pendingEntry.id);
     if (idx >= 0) {
       entries[idx].type = 'topup';
       entries[idx].added = added.toFixed(2);
-      saveEntries(entries);
+      saveEntries(entries, fuel);
       entryId = entries[idx].id;
       prevBal = pendingEntry._prevBal;
       balanceAfter = parseFloat(entries[idx].balance);
@@ -1310,7 +1677,7 @@ function confirmTopup() {
 
   // §6.2 — check for an emergency-credit/debt discrepancy before finishing.
   if (entryId != null && prevBal != null) {
-    maybeOfferDebtReconciliation(entryId, prevBal, added, balanceAfter);
+    maybeOfferDebtReconciliation(entryId, prevBal, added, balanceAfter, fuel);
   } else {
     renderMeter();
   }
@@ -1322,34 +1689,68 @@ function dismissTopupSheet() {
   renderMeter();
 }
 
-// §7.3 — save toast + undo. Undo removes the exact entry just saved by
-// id, not just "the last entry in the array", so it stays correct even
-// if the smart top-up sheet or a debt reconciliation happens to add
-// another entry in between (rare, but the id-based approach makes it a
-// non-issue rather than a subtle edge case).
+// §7.3/§5.2(b) — save toast + undo. Undo removes the exact entry just
+// saved by id, not just "the last entry in the array", so it stays
+// correct even if the smart top-up sheet or a debt reconciliation
+// happens to add another entry in between. The fuel is now stored
+// alongside the id too — without it, undo would write to whatever
+// activeFuel happens to be when Undo is tapped, which after the
+// two-button quick entry change may not be the fuel that was actually
+// saved to. This was a live bug the two-button refactor would otherwise
+// introduce silently.
 let toastTimeout = null;
 let lastSavedEntryId = null;
+let lastSavedFuel = null;
 
-function showSaveToast(message, entryId) {
+function showSaveToast(message, entryId, fuel, trend) {
   lastSavedEntryId = entryId;
+  // Phase 6.5 §6 audit: this function's only call site (in
+  // quickSaveConfirmed) always passes a real fuel; the fallback here is
+  // defensive only, for any future caller that omits it.
+  lastSavedFuel = fuel || activeFuel;
   const toast = document.getElementById('save-toast');
   const msgEl = document.getElementById('toast-msg');
+  const trendEl = document.getElementById('toast-trend');
   if (!toast || !msgEl) return;
   msgEl.textContent = message;
+
+  // §6.2/§6.4 — the consequence in days, not a percentage; identical
+  // phrasing weight for both directions (no exclamation marks, no
+  // warning language, higher and lower get equal billing per the doc's
+  // explicit tone requirement).
+  if (trend && trendEl) {
+    const dayWord = trend.days === 1 ? 'day' : 'days';
+    trendEl.textContent = trend.direction === 'higher'
+      ? 'Running a bit high \u2014 about ' + trend.days + ' ' + dayWord + ' sooner than last week\u2019s pace.'
+      : 'Running lower than usual \u2014 about ' + trend.days + ' ' + dayWord + ' longer.';
+    trendEl.style.display = 'block';
+    toast.classList.add('has-trend');
+  } else if (trendEl) {
+    trendEl.textContent = '';
+    trendEl.style.display = 'none';
+    toast.classList.remove('has-trend');
+  }
+
   toast.classList.add('open');
   clearTimeout(toastTimeout);
+  // §6.5 — a little longer when there's a second line to read, but
+  // capped well short of feeling stuck on screen.
+  const dismissMs = trend ? 7000 : 5000;
   toastTimeout = setTimeout(() => {
     toast.classList.remove('open');
     lastSavedEntryId = null;
-  }, 5000);
+    lastSavedFuel = null;
+  }, dismissMs);
 }
 
 function undoLastSave() {
   if (lastSavedEntryId == null) return;
+  const fuel = lastSavedFuel;
   clearTimeout(toastTimeout);
   document.getElementById('save-toast').classList.remove('open');
-  saveEntries(loadEntries().filter(e => e.id !== lastSavedEntryId));
+  saveEntries(loadEntries(fuel).filter(e => e.id !== lastSavedEntryId), fuel);
   lastSavedEntryId = null;
+  lastSavedFuel = null;
   // Refresh whichever views could be showing the now-removed entry.
   renderMeter();
   if (document.getElementById('page-history').classList.contains('active')) renderHistory();
@@ -1359,13 +1760,20 @@ function undoLastSave() {
 // §6.2 — shared by both places a top-up can be created (smart-detection
 // confirm and the manual entry form). Never assumes the discrepancy is
 // debt — always asks, with the computed figure pre-filled and editable,
-// per the doc's exact build steps.
+// per the doc's exact build steps. Fuel is stashed alongside the pending
+// id, same reasoning as lastSavedFuel above — this can be confirmed
+// after the person has moved on to a different fuel/page, so activeFuel
+// at confirm-time is not a safe assumption.
 let pendingDebtEntryId = null;
+let pendingDebtFuel = null;
 
-function maybeOfferDebtReconciliation(entryId, prevBal, added, balanceAfter) {
+function maybeOfferDebtReconciliation(entryId, prevBal, added, balanceAfter, fuel) {
   const discrepancy = calcDebtDiscrepancy(prevBal, added, balanceAfter);
   if (discrepancy == null) { renderMeter(); return; }
   pendingDebtEntryId = entryId;
+  // Phase 6.5 §6 audit: both call sites (confirmTopup, submitManualTopup)
+  // already pass a resolved real fuel. Defensive fallback only.
+  pendingDebtFuel = fuel || activeFuel;
   document.getElementById('debt-amount').value = discrepancy.toFixed(2);
   document.getElementById('debt-sheet-msg').textContent =
     '\u00a3' + discrepancy.toFixed(2) + ' of this top-up doesn\u2019t match your expected balance \u2014 ' +
@@ -1375,15 +1783,23 @@ function maybeOfferDebtReconciliation(entryId, prevBal, added, balanceAfter) {
 
 function confirmDebtRecovered() {
   const amt = parseFloat(document.getElementById('debt-amount').value);
+  // Phase 6.5 §6 audit: pendingDebtFuel is always set alongside
+  // pendingDebtEntryId in maybeOfferDebtReconciliation, so a real value
+  // is present here even though this can fire some time after the sheet
+  // opened (the person may have navigated elsewhere in between) —
+  // defensive fallback only, exercised only if that invariant is ever
+  // broken.
+  const fuel = pendingDebtFuel || activeFuel;
   if (pendingDebtEntryId != null && !isNaN(amt) && amt > 0) {
-    const entries = loadEntries();
+    const entries = loadEntries(fuel);
     const idx = entries.findIndex(e => e.id === pendingDebtEntryId);
     if (idx >= 0) {
       entries[idx].debtRecovered = amt.toFixed(2);
-      saveEntries(entries);
+      saveEntries(entries, fuel);
     }
   }
   pendingDebtEntryId = null;
+  pendingDebtFuel = null;
   document.getElementById('debt-sheet-bg').classList.remove('open');
   renderMeter();
   renderHistory(); // in case History is the active tab and needs the new field reflected
@@ -1393,6 +1809,7 @@ function dismissDebtSheet() {
   // "No, it was all electricity" — leave debtRecovered unset. The
   // discrepancy will be treated as ordinary usage, same as before §6.2.
   pendingDebtEntryId = null;
+  pendingDebtFuel = null;
   document.getElementById('debt-sheet-bg').classList.remove('open');
   renderMeter();
 }
@@ -1426,85 +1843,41 @@ function renderHeaderSparkline(entries) {
 }
 
 // ── Render Meter page ─────────────────────────────────────
-function renderMeter() {
-  updateTimestamp();
-  const entries = loadEntries();
-  const settings = loadSettings();
-  renderHeaderSparkline(entries);
-  const isGas = activeFuel === 'gas';
-  const alertEl = document.getElementById('meter-alert');
-  const statsEl = document.getElementById('meter-stats');
-
-  // Fuel-aware labels
-  const eyebrow = document.getElementById('meter-eyebrow');
-  const quickLabel = document.getElementById('quick-label');
-  if (eyebrow) eyebrow.textContent = isGas ? 'Gas Meter' : 'Electric Meter';
-  if (quickLabel) quickLabel.textContent = (isGas ? 'Gas' : 'Electricity') + ' meter balance';
-
-  // §4.4 — the Meter page no longer has a period selector; it always shows
-  // the last-7-days view. This matches its pre-existing default and the
-  // "vs the week before" framing used in the demoted rate line's trend.
-  // The single remaining period selector lives on Insights (insightsPeriod).
-  const stats = calcStats(entries, '7d');
+// §5.5 — builds the balance/run-out/rate card pair for ONE fuel. Extracted
+// from what used to be the single-fuel body of renderMeter so the exact
+// same card structure (balance, days left, cycle progress, run-out
+// estimate, rate context) can be repeated once per tracked fuel. Returns
+// { html, daysLeft, urgency } — daysLeft drives the doc's required sort
+// order, urgency (Infinity-safe: 'critical' > 'low' > 'healthy') feeds
+// into the header's own single-worst-case tint.
+function buildFuelCard(fuel) {
+  const entries = loadEntries(fuel);
+  const settings = loadSettings(fuel);
+  const stats = calcStats(entries, '7d', fuel);
   const lowBalance = parseFloat(settings.lowBalance) || 10;
   const topupRemind = parseFloat(settings.topupRemind) || 5;
   const sc = parseFloat(settings.standingCharge) || 0;
-
-  // §5.1 — single derived urgency state drives the header, hero number,
-  // and progress fill together, replacing four separate hardcoded 2/4-day
-  // checks that used to disagree with each other if one was ever edited
-  // without the others. Alert banner threshold (topupRemind) and the
-  // critical <3-day boundary are the same two numbers everywhere now.
-  const urgency = stats ? calcUrgency(stats.daysLeft, topupRemind) : 'healthy';
-  const headerEl = document.getElementById('meter-header');
-  if (headerEl) {
-    headerEl.classList.remove('urgency-healthy','urgency-low','urgency-critical');
-    if (stats) headerEl.classList.add('urgency-' + urgency);
-  }
-
-  // Alert banner
-  let alertHTML = '';
-  if (stats) {
-    if (urgency === 'critical') {
-      alertHTML = '<div class="alert-banner danger"><div class="alert-icon danger">'+icon('dot')+'</div><div><div class="alert-main danger">Top up now \u2014 may cut out today!</div><div class="alert-sub">Last reading: '+fmt(stats.lastDate)+'</div></div></div>';
-    } else if (urgency === 'low') {
-      alertHTML = '<div class="alert-banner warn"><div class="alert-icon warn">'+icon('dot')+'</div><div><div class="alert-main warn">About '+Math.round(stats.daysLeft)+' days remaining \u2014 consider topping up</div><div class="alert-sub">Last reading: '+fmt(stats.lastDate)+'</div></div></div>';
-    }
-  }
-  // §7.5 — passive backup nudge, computed fresh on every render (rather
-  // than mutated in separately) so it can never be silently wiped out by
-  // the next renderMeter() call, and correctly disappears once a backup
-  // is genuinely recorded without needing a separate DOM patch.
-  alertHTML += backupNudgeHTML();
-  // §6.5 — reading freshness prompt. The forecast is only as good as how
-  // recently it was fed, and the owner's real gaps (8 and 15 days between
-  // readings) show the app was otherwise entirely passive about the one
-  // input it actually needs. A soft line, not another loud banner — tone
-  // escalates past ~5 days per the doc's own framing, using the same
-  // warn/danger colour language as everywhere else rather than a new one.
-  if (stats) alertHTML += freshnessPromptHTML(stats.lastDate);
-  alertEl.innerHTML = alertHTML;
+  const multi = isMultiFuel();
+  const fuelHeading = multi ? '<div class="gear-section-title" style="margin-top:18px">'+FUEL_LABELS[fuel]+'</div>' : '';
 
   if (!stats) {
     const count = entries.filter(e => e.balance != null).length;
-    statsEl.innerHTML =
-      '<div class="empty-state">'+
+    const isGas = fuel === 'gas';
+    const html = fuelHeading + '<div class="empty-state">'+
         '<div class="empty-icon">'+(isGas ? icon('flame') : icon('bolt'))+'</div>'+
         '<div class="empty-title">'+(count<1?'No readings yet':'Not enough data')+'</div>'+
         '<div class="empty-sub" style="max-width:240px;margin:6px auto 0">'+(count<1?'Enter your current meter balance above.':'Add more readings or select a wider period.')+'</div>'+
         (count<1&&!isGas?'<div style="margin-top:14px;font-size:12px;color:var(--text3)">Tip: check screen A on your ACE9000</div>':'')+
       '</div>';
-    return;
+    // No stats means no meaningful daysLeft to sort by — sorts last
+    // (Infinity), since an empty/insufficient-data card isn't urgent,
+    // it's just uninformative.
+    return { html, daysLeft: Infinity, urgency: 'healthy', hasData: count > 0 };
   }
 
+  const urgency = calcUrgency(stats.daysLeft, topupRemind);
   const runClass = urgency==='critical'?'danger':urgency==='low'?'warn':'healthy';
   const runIconColour = runClass==='danger'?'var(--red)':runClass==='warn'?'var(--amber)':'var(--green)';
-  // §8 — colour is never the sole carrier of the low-balance signal: the
-  // note below always states the threshold in words, with colour as
-  // reinforcement rather than the only cue. This also fixes a real gap
-  // found while auditing this: `lowBalance` was a configurable Settings
-  // value with no consumer anywhere in the render — it computed a
-  // `balClass` that was never applied to any element.
   const lowBalanceNote = stats.remaining <= lowBalance
     ? '<div class="balance-hero-sub" style="color:var(--red-text);font-weight:600;margin-top:4px">Below your \u00a3'+lowBalance.toFixed(2)+' low balance warning</div>'
     : '';
@@ -1512,10 +1885,8 @@ function renderMeter() {
   const trendDir = stats.trend ? stats.trend.dir : '';
   const trendLabel = trendDir==='up'?'\u25b2 Usage up':trendDir==='down'?'\u25bc Usage down':'\u2192 Similar to before';
   const trendHTML = stats.trend ? '<div class="rate-trend '+trendDir+'">'+trendLabel+' '+stats.trend.pct+'% vs prior period</div>' : '';
-  const scNote = sc > 0 ? '<div class="rate-sc-note">Electricity use only (standing charge deducted)</div>' : '';
+  const scNote = sc > 0 ? '<div class="rate-sc-note">'+FUEL_LABELS[fuel]+' use only (standing charge deducted)</div>' : '';
 
-  // Forecast wording. Under critical we talk in hours; otherwise whole
-  // days, because a tenth of a day is precision the readings can't support.
   const daysLeftLabel = urgency === 'critical'
     ? Math.round(stats.daysLeft * 24) + ' hrs left'
     : 'about ' + Math.round(stats.daysLeft) + ' days left';
@@ -1523,17 +1894,9 @@ function renderMeter() {
     ? 'As early as ' + fmt(stats.runOutWorst) + ' if usage picks up'
     : 'Estimated from your last ' + stats.forecastDays + ' days';
 
-  // §4.1 — balance and run-out are the primary decision-relevant figures,
-  // so they lead the page. The daily/hourly rate that used to be the 48px
-  // hero is demoted to a supporting card below. Weekly framing added
-  // alongside daily since top-ups happen in lumps, not by the day.
   const weeklyRate = stats.perDay * 7;
   const heroClass = urgency==='critical'?'danger':urgency==='low'?'warn':'healthy';
 
-  // §6.2 — surface the most recently confirmed debt recovery, if any. The
-  // doc's build steps only ask to record and exclude this from usage
-  // maths, not maintain a running "amount still owed" ledger, so this is
-  // informational context about the last top-up rather than a live balance.
   const debtTopups = entries.filter(e => e.type === 'topup' && e.debtRecovered != null)
     .sort((a,b) => parseLocal(b.datetime) - parseLocal(a.datetime));
   const debtNote = debtTopups.length
@@ -1544,7 +1907,10 @@ function renderMeter() {
   const confidence = calcForecastConfidence(entries, stats.lastDate);
   const confColour = confidence.level==='good'?'var(--green-text)':confidence.level==='fair'?'var(--amber-text)':'var(--red-text)';
 
-  statsEl.innerHTML =
+  // §5.5 — "Plan a top-up" needs to open the planner FOR THIS FUEL, not
+  // whatever activeFuel happens to be — openTopupPlanner is updated below
+  // to accept a fuel argument for exactly this reason.
+  const html = fuelHeading +
     '<div class="card">'+
       '<div class="balance-hero">'+
         '<div class="balance-hero-value'+(heroClass?' '+heroClass:'')+'">\u00a3'+parseFloat(stats.remaining).toFixed(2)+'</div>'+
@@ -1557,15 +1923,124 @@ function renderMeter() {
         '<div><div class="runout-date">Runs out ~'+fmt(stats.runOutDate)+'</div><div class="runout-sub">'+runOutSub+'</div>'+
         '<div class="runout-sub" style="color:'+confColour+';font-weight:600;margin-top:3px">'+confidence.label+' \u2014 '+confidence.detail+'</div></div>'+
       '</div>'+
-      '<button class="plan-topup-btn" onclick="openTopupPlanner()">Plan a top-up</button>'+
+      '<button class="plan-topup-btn" onclick="openTopupPlanner(\''+fuel+'\')">Plan a top-up</button>'+
     '</div>'+
     '<div class="card">'+
       '<div class="rate-context">\u00a3'+weeklyRate.toFixed(2)+'/week &nbsp;&middot;&nbsp; \u00a3'+stats.perDay.toFixed(2)+'/day</div>'+
       trendHTML+
       scNote+
       debtNote+
-    '</div>'+
-    '<div class="version-tag">v3.5</div>';
+      backupNudgeHTML(fuel)+
+      freshnessPromptHTML(stats.lastDate, multi ? FUEL_LABELS[fuel] : null)+
+    '</div>';
+
+  return { html, daysLeft: stats.daysLeft, urgency, hasData: true, runOutDate: stats.runOutDate };
+}
+
+const URGENCY_RANK = { critical: 0, low: 1, healthy: 2 };
+
+// §5.6 — "Next shop trip" headline, the main payoff of this whole phase:
+// the question a single-meter-at-a-time architecture could never answer.
+// Takes the already-sorted `cards` array from renderMeter (cheapest
+// correct source — it's already computed daysLeft/runOutDate per fuel,
+// sorted ascending) rather than recomputing anything. Multi-fuel only,
+// per the doc — with one tracked fuel there's no "which one runs out
+// first" question to answer.
+function shopTripHeadlineHTML(cards) {
+  const withData = cards.filter(c => c.hasData && c.runOutDate);
+  if (withData.length < 2) return ''; // need at least two real forecasts to have a "which one first" answer
+  // cards is already sorted by daysLeft ascending, so the first
+  // real-data entry is the one running out soonest.
+  const soonest = withData[0];
+  const dateStr = fmtHeadlineDate(soonest.runOutDate);
+  return '<div class="shop-trip-headline">' +
+    '<div class="headline-label">Next shop trip</div>' +
+    '<div class="headline-main">~' + dateStr + '</div>' +
+    '<div class="headline-sub">' + FUEL_LABELS[soonest.fuel] + ' runs out first</div>' +
+  '</div>';
+}
+
+function renderMeter() {
+  updateTimestamp();
+  const entries = loadEntries();
+  renderHeaderSparkline(entries);
+  renderQuickSaveButtons();
+  renderLoggedTodayMarker();
+  const alertEl = document.getElementById('meter-alert');
+  const statsEl = document.getElementById('meter-stats');
+  // §5.7 audit — isGas now checks the actual single tracked fuel, not
+  // activeFuel, which is permanently 'electricity' since the toggle that
+  // used to change it no longer exists. Checking activeFuel here would
+  // have meant a genuinely gas-only single-fuel user saw "Electric
+  // Meter" forever, regardless of which fuel they actually track.
+  const isGas = trackedFuels()[0] === 'gas';
+
+  // Fuel-aware labels — kept for single-fuel mode; in multi-fuel mode the
+  // page title stops naming one specific fuel, since the page now shows
+  // every tracked meter at once.
+  const eyebrow = document.getElementById('meter-eyebrow');
+  const quickLabel = document.getElementById('quick-label');
+  const multi = isMultiFuel();
+  if (eyebrow) eyebrow.textContent = multi ? 'Your Meters' : (isGas ? 'Gas Meter' : 'Electric Meter');
+  if (quickLabel) quickLabel.textContent = multi ? 'Meter balance' : (isGas ? 'Gas' : 'Electricity') + ' meter balance';
+
+  // §5.5 — build one card-pair per tracked fuel, then sort by daysLeft
+  // ascending so the fuel closest to running out is on top, per the
+  // doc's explicit requirement.
+  const fuels = trackedFuels();
+  const cards = fuels.map(fuel => Object.assign({ fuel }, buildFuelCard(fuel)));
+  cards.sort((a, b) => a.daysLeft - b.daysLeft);
+
+  // §5.6 — the main payoff of the whole phase.
+  const headlineEl = document.getElementById('shop-trip-headline');
+  if (headlineEl) headlineEl.innerHTML = shopTripHeadlineHTML(cards);
+
+  // Header urgency tint reflects the SINGLE WORST case across every
+  // tracked fuel, not one fuel's alone — matching what's visually at the
+  // top of the sorted card stack, per this implementation's resolution
+  // of a genuine gap in the doc (it specifies per-card tinting but not
+  // what drives the ambient header colour once there's more than one
+  // fuel to consider).
+  let worstUrgency = 'healthy';
+  cards.forEach(c => { if (URGENCY_RANK[c.urgency] < URGENCY_RANK[worstUrgency]) worstUrgency = c.urgency; });
+  const anyHasData = cards.some(c => c.hasData);
+  const headerEl = document.getElementById('meter-header');
+  if (headerEl) {
+    headerEl.classList.remove('urgency-healthy','urgency-low','urgency-critical');
+    if (anyHasData) headerEl.classList.add('urgency-' + worstUrgency);
+  }
+
+  // Alert banner — the worst-case urgency/critical banner still comes
+  // from whichever fuel is currently on top of the sorted stack (cards[0]),
+  // prefixed with its name once multi-fuel, so the single most urgent
+  // thing to act on is what's announced, not a wall of per-fuel banners.
+  let alertHTML = '';
+  if (cards.length && cards[0].hasData) {
+    const topCard = cards[0];
+    const topStats = calcStats(loadEntries(topCard.fuel), '7d', topCard.fuel);
+    if (topStats) {
+      const prefix = multi ? FUEL_LABELS[topCard.fuel] + ': ' : '';
+      if (topCard.urgency === 'critical') {
+        alertHTML = '<div class="alert-banner danger"><div class="alert-icon danger">'+icon('dot')+'</div><div><div class="alert-main danger">'+prefix+'Top up now \u2014 may cut out today!</div><div class="alert-sub">Last reading: '+fmt(topStats.lastDate)+'</div></div></div>';
+      } else if (topCard.urgency === 'low') {
+        alertHTML = '<div class="alert-banner warn"><div class="alert-icon warn">'+icon('dot')+'</div><div><div class="alert-main warn">'+prefix+'About '+Math.round(topStats.daysLeft)+' days remaining \u2014 consider topping up</div><div class="alert-sub">Last reading: '+fmt(topStats.lastDate)+'</div></div></div>';
+      }
+    }
+  }
+  // Backup nudge: one combined check across every tracked fuel (a
+  // combined export resets every fuel's timestamp together, so showing
+  // one fuel's nudge and then another's right after would be confusing
+  // noise for what is, in practice, a single "go export" action).
+  const anyBackupDue = fuels.some(fuel => backupNudgeHTML(fuel) !== '');
+  if (anyBackupDue) alertHTML += backupNudgeHTML(fuels.find(fuel => backupNudgeHTML(fuel) !== ''));
+  alertEl.innerHTML = alertHTML;
+
+  if (!anyHasData) {
+    statsEl.innerHTML = cards.map(c => c.html).join('');
+    return;
+  }
+
+  statsEl.innerHTML = cards.map(c => c.html).join('') + '<div class="version-tag">v4.3</div>';
 }
 
 // ── Top-up planner (§6.1) ─────────────────────────────────
@@ -1578,9 +2053,20 @@ function renderMeter() {
 // around when the goal is "don't run out."
 let plannerStats = null;
 
-function openTopupPlanner() {
-  const entries = loadEntries();
-  plannerStats = calcStats(entries, '7d');
+// §5.5 — takes an explicit fuel (from whichever card's "Plan a top-up"
+// button was tapped). Phase 6.5 §6 audit: the one call site, inside
+// buildFuelCard, always has a real fuel in scope from its own loop
+// variable — fuel || activeFuel here is a defensive default only.
+// plannerFuel is stashed so plannerDateChanged/plannerAmountChanged —
+// which read the shared plannerStats global set here — implicitly stay
+// correct without each needing their own fuel argument threaded through
+// separately.
+let plannerFuel = null;
+function openTopupPlanner(fuel) {
+  fuel = fuel || activeFuel;
+  plannerFuel = fuel;
+  const entries = loadEntries(fuel);
+  plannerStats = calcStats(entries, '7d', fuel);
   if (!plannerStats) {
     openModal('Top-up planner', 'Add at least two readings first so the app has a usage rate to plan against.', () => {});
     return;
@@ -1588,7 +2074,7 @@ function openTopupPlanner() {
 
   const rate = plannerStats.burnRate;
   document.getElementById('planner-rate-note').textContent =
-    'Based on your recent rate of \u00a3' + rate.toFixed(2) + '/day (gross, incl. standing charge).';
+    (isMultiFuel() ? FUEL_LABELS[fuel] + ' \u2014 based' : 'Based') + ' on your recent rate of \u00a3' + rate.toFixed(2) + '/day (gross, incl. standing charge).';
 
   // Default the date field to a sensible starting point — one week out —
   // so there's something to see before the user touches anything.
@@ -1666,8 +2152,37 @@ function plannerAmountChanged() {
 function setInsightsPeriod(p) { insightsPeriod = p; renderInsights(); }
 
 function renderInsights() {
-  const entries = loadEntries();
-  const stats = calcStats(entries, insightsPeriod);
+  const fuels = trackedFuels();
+  const multi = isMultiFuel();
+  // §5.1 — defaults to the first tracked fuel on load, never persisted.
+  if (!insightsFuel || !fuels.includes(insightsFuel)) insightsFuel = fuels[0];
+  const fuel = insightsFuel;
+  const entries = loadEntries(fuel);
+  const stats = calcStats(entries, insightsPeriod, fuel);
+
+  // §5.4 — the header always states which meter is displayed, even
+  // though the selector below also shows it — the selector shows what's
+  // selectable, the header states what's currently on screen, and stays
+  // true even once the selector has scrolled off screen.
+  const eyebrow = document.getElementById('insights-eyebrow');
+  if (eyebrow) eyebrow.textContent = multi ? FUEL_LABELS[fuel] + ' Meter' : 'Electric Meter';
+
+  // §5.1 — fuel selector, hidden entirely in single-fuel mode.
+  const fuelRow = document.getElementById('insights-fuel-row');
+  if (fuelRow) {
+    if (multi) {
+      fuelRow.innerHTML = '<div class="insights-fuel-select">' +
+        fuels.map(f =>
+          '<button class="insights-fuel-seg'+(fuel===f?' active fuel-'+f:'')+'" onclick="setInsightsFuel(\''+f+'\')">' +
+            icon(f==='gas'?'flame':'bolt') + ' ' + FUEL_LABELS[f] +
+          '</button>'
+        ).join('') +
+      '</div>';
+      fuelRow.style.display = 'block';
+    } else {
+      fuelRow.style.display = 'none';
+    }
+  }
 
   // Period selector
   const periodsEl = document.getElementById('insights-periods');
@@ -1677,16 +2192,14 @@ function renderInsights() {
     ).join('');
   }
 
-  // §6.3 — seasonal honesty on the monthly projection. projMonthly is a
-  // flat extrapolation of the selected period's rate; in a UK home with
-  // electric heating that can be badly wrong in either direction depending
-  // on which season the period happens to fall in. Minimum: always label
-  // it as a same-usage projection, not a forecast of the actual month
-  // ahead. Better: once the same calendar month exists from a year ago,
-  // show the real comparison instead of a generic warning.
+  // §6.3 — seasonal honesty on the monthly projection. §5.3 (Phase 6.5)
+  // — for gas, heating is the DOMINANT winter load (more relevant than
+  // electricity's caveat, not less), so the wording is fuel-specific
+  // rather than always talking about "winter" in generic terms that
+  // silently assumed electricity.
   let projCaveat = '';
   if (stats) {
-    const yoy = calcYearOverYear(entries, stats.lastDate);
+    const yoy = calcYearOverYear(entries, stats.lastDate, fuel);
     if (yoy) {
       const diff = stats.projMonthly - yoy.lastYearUsed;
       const pct = yoy.lastYearUsed > 0 ? (diff / yoy.lastYearUsed) * 100 : null;
@@ -1696,9 +2209,17 @@ function renderInsights() {
     } else {
       const m = stats.lastDate.getMonth() + 1; // 1-12
       let seasonNote;
-      if (m===12||m===1||m===2) seasonNote = 'summer will likely be lower';
-      else if (m===6||m===7||m===8) seasonNote = 'winter will likely be higher';
-      else seasonNote = 'usage varies by season';
+      if (fuel === 'gas') {
+        // Heating is gas's dominant load, so winter's swing is larger,
+        // not smaller — the caveat matters MORE here, not less.
+        if (m===12||m===1||m===2) seasonNote = 'summer will likely be much lower \u2014 heating is most of winter gas use';
+        else if (m===6||m===7||m===8) seasonNote = 'winter will likely be much higher \u2014 heating is most of winter gas use';
+        else seasonNote = 'usage swings sharply with heating season';
+      } else {
+        if (m===12||m===1||m===2) seasonNote = 'summer will likely be lower';
+        else if (m===6||m===7||m===8) seasonNote = 'winter will likely be higher';
+        else seasonNote = 'usage varies by season';
+      }
       projCaveat = '<div class="stat-sub">At current usage \u2014 ' + seasonNote + '</div>';
     }
   }
@@ -1709,7 +2230,7 @@ function renderInsights() {
     if (!stats) {
       summaryEl.innerHTML = '<div class="chart-empty" style="padding:8px 0">Not enough data for this period.</div>';
     } else {
-      const daily = calcDailyUsage(entries);
+      const daily = calcDailyUsage(entries, fuel);
       const now = stats.lastDate;
       let cutoffMs;
       if (insightsPeriod==='24h') cutoffMs = now.getTime()-86400000;
@@ -1724,7 +2245,7 @@ function renderInsights() {
           '<div><div class="stat-label">Avg per day</div><div class="stat-value accent">\u00a3'+stats.perDay.toFixed(2)+'</div></div>'+
           (maxDay?'<div><div class="stat-label">Highest day</div><div class="stat-value red">\u00a3'+maxDay.value.toFixed(2)+'</div><div class="stat-sub">'+fmtDay(maxDay.date)+'</div></div>':'<div></div>')+
           (minDay&&minDay.value>0?'<div><div class="stat-label">Lowest day</div><div class="stat-value green">\u00a3'+minDay.value.toFixed(2)+'</div><div class="stat-sub">'+fmtDay(minDay.date)+'</div></div>':'<div></div>')+
-        '</div>'+compareToUsualHTML(entries, stats.lastDate);
+        '</div>'+compareToUsualHTML(entries, stats.lastDate, fuel);
     }
   }
 
@@ -1754,9 +2275,14 @@ function renderInsights() {
     }
   }
 
-  renderDailyChart(entries, insightsPeriod);
-  renderRollingChart(entries);
-  renderMonthlyTable(entries);
+  renderDailyChart(entries, insightsPeriod, fuel);
+  renderRollingChart(entries, fuel);
+  renderMonthlyTable(entries, fuel);
+}
+
+function setInsightsFuel(fuel) {
+  insightsFuel = fuel;
+  renderInsights();
 }
 
 // ── SVG helpers ───────────────────────────────────────────
@@ -1779,11 +2305,11 @@ function drawGrid(W,H,pad,maxY,steps,prefix) {
 }
 
 // ── Daily chart ───────────────────────────────────────────
-function renderDailyChart(entries, period) {
+function renderDailyChart(entries, period, fuel) {
   const el = document.getElementById('chart-daily');
-  const daily = calcDailyUsage(entries);
+  const daily = calcDailyUsage(entries, fuel);
   if (daily.length < 2) { el.innerHTML='<div class="chart-empty">Not enough data yet.</div>'; return; }
-  const stats = calcStats(entries, period||'30d');
+  const stats = calcStats(entries, period||'30d', fuel);
   let pts;
   if (!stats||period==='all') { pts = daily; }
   else {
@@ -1820,9 +2346,9 @@ function renderDailyChart(entries, period) {
 }
 
 // ── Rolling average chart ─────────────────────────────────
-function renderRollingChart(entries) {
+function renderRollingChart(entries, fuel) {
   const el = document.getElementById('chart-rolling');
-  const daily = calcDailyUsage(entries);
+  const daily = calcDailyUsage(entries, fuel);
   if (daily.length < 7) { el.innerHTML='<div class="chart-empty">Need at least 7 days of data.</div>'; return; }
   const rolling=[];
   for(let i=6;i<daily.length;i++){
@@ -1854,10 +2380,10 @@ function renderRollingChart(entries) {
 }
 
 // ── Monthly table ─────────────────────────────────────────
-function renderMonthlyTable(entries) {
+function renderMonthlyTable(entries, fuel) {
   const el = document.getElementById('monthly-table');
   if (!entries.length) { el.innerHTML='<div class="chart-empty">No data yet.</div>'; return; }
-  const daily = calcDailyUsage(entries);
+  const daily = calcDailyUsage(entries, fuel);
   const months = {};
   entries.forEach(e => {
     const k = monthKey(parseLocal(e.datetime));
@@ -1882,38 +2408,107 @@ function renderMonthlyTable(entries) {
 }
 
 // ── History ───────────────────────────────────────────────
+function setHistoryFilter(filter) {
+  historyFilter = filter;
+  editingId = null; editingFuel = null; // switching filter mid-edit would orphan the open form
+  renderHistory();
+}
+
+// Phase 6.5 §4 — History rewrite. Builds one combined, fuel-tagged list
+// across every tracked fuel, filters it for display, but resolves each
+// row's spend note against that SAME fuel's own full sorted list — never
+// against whatever happens to sit at the adjacent index in the
+// interleaved/filtered array. That distinction is the fix for §4.3, the
+// spec's single most-flagged risk in this patch: computing "previous
+// reading" positionally in a combined list would frequently pair an
+// electricity row with a gas balance and render a confident, fictional
+// spend figure.
 function renderHistory() {
-  const entries = loadEntries();
+  const fuels = trackedFuels();
+  const multi = isMultiFuel();
   const el = document.getElementById('history-list');
-  if (!entries.length) {
+
+  // Per-fuel full sorted-ascending lists, built once — the source of
+  // truth for "what came before this reading, for this fuel", regardless
+  // of what filter or pagination is currently applied to the display.
+  const perFuelSorted = {};
+  fuels.forEach(fuel => {
+    perFuelSorted[fuel] = [...loadEntries(fuel)].filter(e => e.balance != null)
+      .sort((a,b) => parseLocal(a.datetime) - parseLocal(b.datetime));
+  });
+
+  const totalAcrossAllFuels = fuels.reduce((s,f) => s + perFuelSorted[f].length, 0);
+
+  // §4.6 — three distinct empty states.
+  if (totalAcrossAllFuels === 0) {
     el.innerHTML='<div class="empty-state"><div class="empty-icon">'+icon('clipboard')+'</div><div class="empty-title">No entries yet</div><div class="empty-sub">Your readings will appear here.</div></div>';
     return;
   }
-  const sorted=[...entries].sort((a,b)=>parseLocal(b.datetime)-parseLocal(a.datetime));
-  const displayed=showAll?sorted:sorted.slice(0,10);
-  let html='';
-  displayed.forEach((e,i)=>{
-    if (editingId===e.id) { html+=renderEditForm(e); return; }
-    const isTopup=e.type==='topup';
-    const next=i<displayed.length-1?displayed[i+1]:null;
-    let spendNote='';
-    if (next&&!editingId) {
-      const pb=parseFloat(next.balance),cb=parseFloat(e.balance);
-      const hrs=Math.abs((parseLocal(e.datetime)-parseLocal(next.datetime))/3600000);
-      if (cb<pb) {
-        const spent=pb-cb;
-        const rateStr=hrs>0?' \u00b7 \u00a3'+(spent/hrs*24).toFixed(2)+'/day':'';
-        spendNote='<div class="spend-annotation"><div class="spend-line"></div><div class="spend-val">\u2193 \u00a3'+spent.toFixed(2)+' in '+hrs.toFixed(1)+'h'+rateStr+'</div><div class="spend-line"></div></div>';
+  const filterFuels = (multi && historyFilter !== 'all') ? [historyFilter] : fuels;
+  const filteredTotal = filterFuels.reduce((s,f) => s + perFuelSorted[f].length, 0);
+  if (filteredTotal === 0) {
+    el.innerHTML='<div class="empty-state"><div class="empty-icon">'+icon('clipboard')+'</div><div class="empty-title">No '+FUEL_LABELS[historyFilter].toLowerCase()+' readings yet</div><div class="empty-sub">Log one above to start '+FUEL_LABELS[historyFilter].toLowerCase()+'\u2019s history.</div></div>';
+    return;
+  }
+
+  // Combined, fuel-tagged, descending-by-date list for display —
+  // built from the same perFuelSorted lists so there's exactly one
+  // source of truth for what "the data" is in this render.
+  let combined = [];
+  filterFuels.forEach(fuel => {
+    perFuelSorted[fuel].forEach(e => combined.push(Object.assign({ _fuel: fuel }, e)));
+  });
+  combined.sort((a,b) => parseLocal(b.datetime) - parseLocal(a.datetime));
+
+  const sorted = combined;
+  const displayed = showAll ? sorted : sorted.slice(0, 10);
+  const showMarkers = multi && historyFilter === 'all'; // §4.2 — markers only carry information in the combined view
+
+  let html = '';
+  displayed.forEach((e) => {
+    if (editingId === e.id && editingFuel === e._fuel) { html += renderEditForm(e, e._fuel, showMarkers); return; }
+    const isTopup = e.type === 'topup';
+
+    // §4.3 — the fix. Look up the previous reading from THIS ROW'S OWN
+    // fuel's full sorted-ascending list, by finding this entry's index
+    // there and taking the one before it — never the adjacent index in
+    // the combined/displayed array. Also resolves against the FULL list,
+    // not the displayed slice, so the last visible row before a
+    // "Show all" cutoff still gets a spend note.
+    let spendNote = '';
+    if (!editingId) {
+      const ownList = perFuelSorted[e._fuel];
+      const ownIdx = ownList.findIndex(x => x.id === e.id);
+      const prevForFuel = ownIdx > 0 ? ownList[ownIdx - 1] : null;
+      if (prevForFuel) {
+        const pb = parseFloat(prevForFuel.balance), cb = parseFloat(e.balance);
+        const hrs = Math.abs((parseLocal(e.datetime) - parseLocal(prevForFuel.datetime)) / 3600000);
+        if (cb < pb) {
+          const spent = pb - cb;
+          const rateStr = hrs > 0 ? ' \u00b7 \u00a3' + (spent/hrs*24).toFixed(2) + '/day' : '';
+          spendNote = '<div class="spend-annotation"><div class="spend-line"></div><div class="spend-val">\u2193 \u00a3'+spent.toFixed(2)+' in '+hrs.toFixed(1)+'h'+rateStr+'</div><div class="spend-line"></div></div>';
+        }
       }
     }
-    const badge=isTopup
-      ?'<span class="pill pill-green" style="font-size:12px;padding:2px 7px">Top-up</span>'
-      :'<span class="pill pill-purple" style="font-size:12px;padding:2px 7px">Reading</span>';
-    html+='<div class="entry-row">'+
+
+    const badge = isTopup
+      ? '<span class="pill pill-green" style="font-size:12px;padding:2px 7px">Top-up</span>'
+      : '<span class="pill pill-purple" style="font-size:12px;padding:2px 7px">Reading</span>';
+    // §4.2 — fuel identity on rows, only rendered when the filter is All
+    // (a marker repeated on every row when already scoped to one fuel by
+    // the active chip is noise, not information).
+    const fuelMarker = showMarkers
+      ? '<span style="color:var(--text3);margin-right:4px;display:inline-flex;vertical-align:-2px">'+icon(e._fuel==='gas'?'flame':'bolt')+'</span>'
+      : '';
+    const edgeStyle = showMarkers
+      ? 'border-left:3px solid '+(e._fuel==='gas'?'#936315':'#5C52B8')+';padding-left:10px;margin-left:-13px;'
+      : '';
+
+    html += '<div class="entry-row" style="'+edgeStyle+'">'+
       '<div class="entry-icon '+(isTopup?'topup':'reading')+'">'+(isTopup?icon('bolt'):icon('plug'))+'</div>'+
       '<div class="entry-body">'+
         '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">'+
-          '<div class="entry-main">'+(isTopup?'+\u00a3'+parseFloat(e.added).toFixed(2)+' topped up':'\u00a3'+parseFloat(e.balance).toFixed(2)+' on meter')+'</div>'+
+          '<div class="entry-main">'+fuelMarker+(isTopup?'+\u00a3'+parseFloat(e.added).toFixed(2)+' topped up':'\u00a3'+parseFloat(e.balance).toFixed(2)+' on meter')+'</div>'+
           badge+
         '</div>'+
         '<div class="entry-sub">'+fmt(parseLocal(e.datetime))+(isTopup?' \u00b7 After: \u00a3'+parseFloat(e.balance).toFixed(2):'')+
@@ -1921,15 +2516,15 @@ function renderHistory() {
         '</div>'+
       '</div>'+
       '<div class="entry-actions">'+
-        '<button class="btn-xs" onclick="startEdit('+e.id+')">Edit</button>'+
-        '<button class="btn-xs del" onclick="openModal(\'Remove entry\',\'Delete this entry? Cannot be undone.\',function(){deleteEntry('+e.id+')})">Del</button>'+
+        '<button class="btn-xs" onclick="startEdit('+e.id+',\''+e._fuel+'\')">Edit</button>'+
+        '<button class="btn-xs del" onclick="openModal(\'Remove entry\',\'Delete this entry? Cannot be undone.\',function(){deleteEntry('+e.id+',\''+e._fuel+'\')})">Del</button>'+
       '</div></div>'+spendNote;
   });
-  if (sorted.length>10) html+='<button class="btn-show-more" onclick="toggleShowAll()">'+(showAll?'Show less':'Show all '+sorted.length+' entries')+'</button>';
-  el.innerHTML=html;
+  if (sorted.length > 10) html += '<button class="btn-show-more" onclick="toggleShowAll()">'+(showAll?'Show less':'Show all '+sorted.length+' entries')+'</button>';
+  el.innerHTML = html;
 }
 
-function renderEditForm(e) {
+function renderEditForm(e, fuel, showFuelName) {
   const isTopup=e.type==='topup';
   const twoCol=isTopup
     ?'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">'+
@@ -1943,27 +2538,51 @@ function renderEditForm(e) {
   const debtField = isTopup
     ? '<div class="field"><label>Debt recovered (\u00a3) \u2014 optional</label><input type="number" id="edit-debt" value="'+(e.debtRecovered!=null?e.debtRecovered:'')+'" min="0" step="0.01" placeholder="Leave blank if none"/></div>'
     : '';
+  // §4.5 — names the meter being edited when the surrounding list doesn't
+  // already make that obvious (i.e. the All filter, where rows from both
+  // meters are interleaved and an open form gives no other clue).
+  const editingLabel = showFuelName ? 'Editing \u00b7 ' + FUEL_LABELS[fuel] : 'Editing';
   return '<div class="edit-card">'+
     '<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">'+
       '<span class="pill '+(isTopup?'pill-green':'pill-purple')+'">'+(isTopup?'Top-up':'Reading')+'</span>'+
-      '<span style="font-size:12px;color:var(--text3)">Editing</span>'+
+      '<span style="font-size:12px;color:var(--text3)">'+editingLabel+'</span>'+
     '</div>'+
     '<div class="field"><label>Date &amp; time</label><input type="datetime-local" id="edit-dt" value="'+e.datetime+'"/></div>'+
     twoCol+
     debtField+
     '<div class="edit-btns">'+
       '<button class="btn-cancel" onclick="cancelEdit()">Cancel</button>'+
-      '<button class="btn-save" onclick="saveEdit('+e.id+',\''+e.type+'\')">Save</button>'+
+      '<button class="btn-save" onclick="saveEdit('+e.id+',\''+e.type+'\',\''+fuel+'\')">Save</button>'+
     '</div></div>';
 }
 
-function startEdit(id) { editingId=id; renderHistory(); }
-function cancelEdit() { editingId=null; renderHistory(); }
-function saveEdit(id,type) {
+// §4.4 (Phase 6.5) — edit/delete now take an explicit fuel rather than
+// falling through to loadEntries()/saveEntries()'s activeFuel default.
+// Before this fix, editing or deleting a gas row while electricity was
+// the default fuel loaded electricity's list, found no matching id,
+// and silently saved electricity back unchanged — the UI closed the
+// form and re-rendered as if it had worked. editingFuel is stored
+// alongside editingId so a re-render mid-edit doesn't lose track of
+// which fuel is being edited.
+let editingFuel = null;
+
+function startEdit(id, fuel) { editingId=id; editingFuel=fuel; renderHistory(); }
+function cancelEdit() { editingId=null; editingFuel=null; renderHistory(); }
+function saveEdit(id,type,fuel) {
   const dt=document.getElementById('edit-dt').value;
   const bal=parseFloat(document.getElementById('edit-bal').value);
   if (!dt||isNaN(bal)) return;
-  const entries=loadEntries().map(e=>{
+  const originalEntries = loadEntries(fuel);
+  // Belt and braces per the spec: if the id genuinely isn't in this
+  // fuel's list, do not write anything back. A silent no-op here is
+  // exactly the failure mode that made this class of bug invisible —
+  // better to visibly do nothing than to "succeed" at saving a no-op.
+  if (!originalEntries.some(e => e.id === id)) {
+    console.warn('saveEdit: id ' + id + ' not found in ' + fuel + ' — not saving');
+    editingId=null; editingFuel=null; renderHistory();
+    return;
+  }
+  const entries=originalEntries.map(e=>{
     if (e.id!==id) return e;
     const u={...e,datetime:dt,balance:bal.toFixed(2)};
     if (type==='topup'){
@@ -1977,41 +2596,176 @@ function saveEdit(id,type) {
     }
     return u;
   });
-  saveEntries(entries); editingId=null; renderHistory();
+  saveEntries(entries, fuel); editingId=null; editingFuel=null; renderHistory();
 }
-function deleteEntry(id) { saveEntries(loadEntries().filter(e=>e.id!==id)); renderHistory(); }
+function deleteEntry(id, fuel) {
+  const originalEntries = loadEntries(fuel);
+  if (!originalEntries.some(e => e.id === id)) {
+    console.warn('deleteEntry: id ' + id + ' not found in ' + fuel + ' — not deleting');
+    renderHistory();
+    return;
+  }
+  saveEntries(originalEntries.filter(e=>e.id!==id), fuel);
+  renderHistory();
+}
 function toggleShowAll() { showAll=!showAll; renderHistory(); }
 
 // ── Settings ──────────────────────────────────────────────
-function renderSettings() {
-  const s=loadSettings();
-  const set=(id,val)=>{ const el=document.getElementById(id); if(el) el.value=val; };
-  set('set-lowbal', s.lowBalance||10);
-  set('set-topupremind', s.topupRemind||5);
-  set('set-topupbuffer', s.topupBuffer!==undefined && s.topupBuffer!=='' ? s.topupBuffer : 10);
-  set('set-standing', s.standingCharge||'');
-  set('set-tariff', s.tariff||'');
+// §4.3 — Settings now renders two dynamic pieces: the tracked-fuels
+// checkbox control, and one settings section per tracked fuel (standing
+// charge, tariff, low balance, top-up reminder — the four the doc
+// classifies as genuinely per-fuel). Single-fuel mode renders exactly
+// one unheaded section, matching the pre-Phase-6 layout exactly.
+const FUEL_LABELS = { electricity: 'Electricity', gas: 'Gas' };
+
+function renderTrackedFuelsControl() {
+  const el = document.getElementById('settings-tracked-fuels');
+  if (!el) return;
+  const tracked = trackedFuels();
+  const elecChecked = tracked.includes('electricity');
+  const gasChecked = tracked.includes('gas');
+  el.innerHTML =
+    '<div class="settings-row">' +
+      '<div><div class="settings-label">Electricity</div><div class="settings-sub">' + icon('bolt') + '</div></div>' +
+      '<input type="checkbox" ' + (elecChecked?'checked':'') + ' onchange="toggleTrackedFuel(\'electricity\',this.checked)" style="width:20px;height:20px" />' +
+    '</div>' +
+    '<div class="settings-row">' +
+      '<div><div class="settings-label">Gas</div><div class="settings-sub">' + icon('flame') + '</div></div>' +
+      '<input type="checkbox" ' + (gasChecked?'checked':'') + ' onchange="toggleTrackedFuel(\'gas\',this.checked)" style="width:20px;height:20px" />' +
+    '</div>';
 }
 
+// Guard: unchecking a fuel that has entries must warn that its data
+// stays on disk but its screens hide, and must never delete anything.
+// Electricity specifically cannot be unchecked at all while it holds
+// entries, per the doc's explicit rule.
+function toggleTrackedFuel(fuel, checked) {
+  const current = trackedFuels();
+  const hasEntries = loadEntries(fuel).length > 0;
+
+  if (!checked) {
+    if (fuel === 'electricity' && hasEntries) {
+      openModal('Can\u2019t remove electricity', 'Electricity can\u2019t be untracked while it holds readings.', () => {});
+      renderTrackedFuelsControl(); // revert the checkbox immediately — no cancel callback exists on openModal to hook otherwise
+      return;
+    }
+    const applyRemoval = () => {
+      const updated = current.filter(f => f !== fuel);
+      localStorage.setItem('meter-tracked-fuels', JSON.stringify(updated.length ? updated : ['electricity']));
+      renderSettings();
+    };
+    if (hasEntries) {
+      // openModal has no cancel callback, only Confirm — so the checkbox
+      // is reverted to "still tracked" right away (matching the actual
+      // current state, since nothing has been removed yet), and only
+      // applyRemoval() genuinely changes it if the user confirms. This
+      // avoids ever showing an unchecked box for a fuel that's still
+      // being tracked, which would happen if the DOM's native checkbox
+      // state were left alone pending a confirmation that might not come.
+      renderTrackedFuelsControl();
+      openModal(
+        'Stop tracking ' + FUEL_LABELS[fuel] + '?',
+        'Its data stays on this device, but its screens will be hidden until you track it again.',
+        applyRemoval
+      );
+    } else {
+      applyRemoval();
+    }
+  } else {
+    if (!current.includes(fuel)) {
+      localStorage.setItem('meter-tracked-fuels', JSON.stringify(current.concat(fuel)));
+    }
+    renderSettings();
+  }
+}
+
+function renderSettings() {
+  renderTrackedFuelsControl();
+
+  const fuels = trackedFuels();
+  const perFuelEl = document.getElementById('settings-per-fuel');
+  if (perFuelEl) {
+    let html = '';
+    fuels.forEach(fuel => {
+      const s = loadSettings(fuel);
+      const heading = fuels.length > 1
+        ? '<div class="gear-section-title">' + FUEL_LABELS[fuel] + '</div>'
+        : '';
+      html +=
+        heading +
+        '<div class="card">' +
+          '<div class="settings-row">' +
+            '<div><div class="settings-label">Low balance warning (\u00a3)</div><div class="settings-sub">Alert when balance drops below this</div></div>' +
+            '<input class="settings-input" type="number" min="0" step="0.5" value="' + (s.lowBalance||10) + '" onchange="saveSetting(\'lowBalance\',this.value,\'' + fuel + '\')" placeholder="10" />' +
+          '</div>' +
+          '<div class="settings-row">' +
+            '<div><div class="settings-label">Top-up reminder (days)</div><div class="settings-sub">Warn when this many days left</div></div>' +
+            '<input class="settings-input" type="number" min="1" step="1" value="' + (s.topupRemind||5) + '" onchange="saveSetting(\'topupRemind\',this.value,\'' + fuel + '\')" placeholder="5" />' +
+          '</div>' +
+          '<div class="settings-row">' +
+            '<div><div class="settings-label">Weekly standing charge (\u00a3)</div><div class="settings-sub">Fixed daily charge expressed weekly</div></div>' +
+            '<input class="settings-input" type="number" min="0" step="0.01" value="' + (s.standingCharge||'') + '" onchange="saveSetting(\'standingCharge\',this.value,\'' + fuel + '\')" placeholder="0.00" />' +
+          '</div>' +
+          '<div class="settings-row">' +
+            '<div><div class="settings-label">Tariff rate (p/kWh)</div><div class="settings-sub">Optional \u2014 for energy estimate</div></div>' +
+            '<input class="settings-input" type="number" min="0" step="0.1" value="' + (s.tariff||'') + '" onchange="saveSetting(\'tariff\',this.value,\'' + fuel + '\')" />' +
+          '</div>' +
+        '</div>';
+    });
+    perFuelEl.innerHTML = html;
+  }
+
+  const gs = loadGlobalSettings();
+  const bufferEl = document.getElementById('set-topupbuffer');
+  if (bufferEl) bufferEl.value = gs.topupBuffer!==undefined && gs.topupBuffer!=='' ? gs.topupBuffer : 10;
+
+  const exportSub = document.getElementById('export-sub');
+  if (exportSub) exportSub.textContent = fuels.length > 1 ? 'Download all readings (' + fuels.map(f=>FUEL_LABELS[f]).join(' + ') + ')' : 'Download all readings';
+}
+
+// §4.1 — exports every tracked fuel into one combined file. The CSV
+// format already has a Fuel column (nothing about the format itself
+// needs to change) — only the iteration and filename logic here does.
+// Single-fuel behaviour is preserved exactly: with one tracked fuel this
+// produces the same file, with the same per-fuel filename suffix, as
+// before this change.
 function exportCSV() {
-  const entries=loadEntries().sort((a,b)=>parseLocal(a.datetime)-parseLocal(b.datetime));
-  const fuelLabel=activeFuel;
+  const fuels = trackedFuels();
+  // Concatenate every tracked fuel's entries, tagging each with its own
+  // fuel before the final cross-fuel sort, so a combined file reads in
+  // one genuine chronological order rather than one fuel's block
+  // followed by another's.
+  let allRows = [];
+  fuels.forEach(fuel => {
+    loadEntries(fuel).forEach(e => allRows.push({ entry: e, fuel: fuel }));
+  });
+  allRows.sort((a,b) => parseLocal(a.entry.datetime) - parseLocal(b.entry.datetime));
+
   // §6.2 — Debt Recovered appended as a new trailing column. Appending
   // (not inserting) keeps old parsers that only read the first five
   // columns unaffected, and this file's own import already header-sniffs
   // rather than assuming a fixed column count, so it reads its own output
   // correctly either way.
   let csv='Date,Time,Fuel,Type,Amount Added (\u00a3),Balance (\u00a3),Debt Recovered (\u00a3)\n';
-  entries.forEach(e=>{
+  allRows.forEach(({entry: e, fuel}) => {
     const d=parseLocal(e.datetime);
-    csv+=d.toLocaleDateString('en-GB')+','+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+','+fuelLabel+','+(e.type||'reading')+','+(e.added||'')+','+e.balance+','+(e.debtRecovered||'')+'\n';
+    csv+=d.toLocaleDateString('en-GB')+','+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+','+fuel+','+(e.type||'reading')+','+(e.added||'')+','+e.balance+','+(e.debtRecovered||'')+'\n';
   });
   const url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  const a=document.createElement('a'); a.href=url; a.download='meter-readings-'+fuelLabel+'.csv'; a.click(); URL.revokeObjectURL(url);
-  // §7.5 — record the backup timestamp so the 30-day nudge resets, then
-  // re-render so it disappears immediately rather than on the next
-  // unrelated render.
-  localStorage.setItem('meter-last-backup-' + activeFuel, String(Date.now()));
+  const a=document.createElement('a');
+  a.href=url;
+  // Drop the per-fuel suffix once there's more than one fuel in the file
+  // — "meter-readings-electricity.csv" would be actively misleading once
+  // gas rows are in it too. Single-fuel keeps today's exact filename.
+  a.download = fuels.length > 1 ? 'meter-readings.csv' : 'meter-readings-'+fuels[0]+'.csv';
+  a.click(); URL.revokeObjectURL(url);
+  // §7.5 — record the backup timestamp for EVERY exported fuel, not just
+  // activeFuel. A combined export genuinely backs up every tracked
+  // meter, so the 30-day nudge must clear for all of them — otherwise
+  // the owner can be simultaneously "backed up" (electricity's timestamp
+  // just reset) and "not backed up" (gas's timestamp is still 40 days
+  // old, even though its rows were just in the same file).
+  fuels.forEach(fuel => localStorage.setItem('meter-last-backup-' + fuel, String(Date.now())));
   if (document.getElementById('page-meter').classList.contains('active')) renderMeter();
 }
 
@@ -2042,17 +2796,24 @@ function icsEscape(text) {
   return String(text).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
 }
 
+// §5.7 audit — uses plannerFuel (set by openTopupPlanner when the sheet
+// this button lives on was opened) rather than activeFuel, which is
+// permanently 'electricity' now that the toggle is gone. Without this
+// fix, exportReminder would always generate an electricity reminder
+// regardless of which fuel's planner sheet was actually open — exactly
+// the class of straggler bug this audit exists to catch.
 function exportReminder() {
-  const entries = loadEntries();
-  const settings = loadSettings();
-  const stats = calcStats(entries, '7d');
+  const fuel = plannerFuel || trackedFuels()[0];
+  const entries = loadEntries(fuel);
+  const settings = loadSettings(fuel);
+  const stats = calcStats(entries, '7d', fuel);
   if (!stats) {
     openModal('Not enough data', 'Add at least two readings first so there\u2019s a forecast to base a reminder on.', () => {});
     return;
   }
   const topupRemind = parseFloat(settings.topupRemind) || 5;
   const reminderDate = new Date(stats.runOutDate.getTime() - topupRemind * 86400000);
-  const fuelLabel = activeFuel === 'gas' ? 'gas' : 'electricity';
+  const fuelLabel = fuel === 'gas' ? 'gas' : 'electricity';
   const now = new Date();
 
   const lines = [
@@ -2062,7 +2823,7 @@ function exportReminder() {
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
-    'UID:meter-topup-' + activeFuel + '-' + now.getTime() + '@meter-tracker',
+    'UID:meter-topup-' + fuel + '-' + now.getTime() + '@meter-tracker',
     'DTSTAMP:' + icsDateStamp(now),
     'DTSTART;VALUE=DATE:' + icsAllDayDate(reminderDate),
     'DTEND;VALUE=DATE:' + icsAllDayDate(new Date(reminderDate.getTime() + 86400000)),
@@ -2081,7 +2842,7 @@ function exportReminder() {
   const ics = lines.join('\r\n');
   const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
   const a = document.createElement('a');
-  a.href = url; a.download = 'top-up-' + activeFuel + '-reminder.ics'; a.click();
+  a.href = url; a.download = 'top-up-' + fuel + '-reminder.ics'; a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -2112,41 +2873,96 @@ function importCSV(input) {
     const idxDebt = cols.findIndex(c=>c.startsWith('debt recovered'));
     const minCols = Math.max(idxDate,idxTime,idxType,idxAdded,idxBalance) + 1;
 
-    const existing=loadEntries();
-    const existingKeys=new Set(existing.map(e=>e.datetime+'|'+e.balance));
-    let added=0;
+    // §4.2 — the highest-priority fix in the phase. The old code had a
+    // single shared existingKeys set and a hard `continue` for any row
+    // whose Fuel column didn't match activeFuel — meaning importing a
+    // combined backup while electricity was active silently discarded
+    // every gas row, with the completion message still claiming success.
+    // Fixed by keeping entries and dedup keys PER FUEL: every row is
+    // routed to its own fuel's list (never discarded for naming a
+    // "wrong" fuel), and a shared dedup set would otherwise let an
+    // electricity reading suppress a legitimate gas reading at the same
+    // timestamp/balance — per-fuel sets prevent that cross-contamination.
+    const perFuelExisting = {};   // fuel -> array of entries (existing + newly imported)
+    const perFuelKeys = {};       // fuel -> Set of "datetime|balance" dedup keys
+    const perFuelAdded = {};      // fuel -> count of genuinely new rows imported
+    let duplicatesSkipped = 0;
+    function bucketFor(fuel) {
+      if (!perFuelExisting[fuel]) {
+        perFuelExisting[fuel] = loadEntries(fuel);
+        perFuelKeys[fuel] = new Set(perFuelExisting[fuel].map(en => en.datetime+'|'+en.balance));
+        perFuelAdded[fuel] = 0;
+      }
+      return { entries: perFuelExisting[fuel], keys: perFuelKeys[fuel] };
+    }
+
     for (let i=1;i<lines.length;i++){
       const row=lines[i].split(',').map(c=>c.trim());
       if (row.length<minCols) continue;
       const date = row[idxDate];
       const time = idxTime>=0 ? row[idxTime] : '';
-      const fuel = idxFuel>=0 ? row[idxFuel] : '';
+      // Legacy rows with no Fuel column at all go to activeFuel, preserving
+      // current behaviour for old exports predating the column — per the
+      // CSV-is-a-contract constraint. A row that DOES name a fuel is
+      // routed there regardless of whether that fuel is currently tracked
+      // — never discarded silently, per the doc's explicit instruction.
+      const rowFuel = (idxFuel>=0 && row[idxFuel]) ? row[idxFuel] : activeFuel;
       const type = idxType>=0 ? row[idxType] : 'reading';
       const addedAmt = idxAdded>=0 ? row[idxAdded] : '';
       const balance = idxBalance>=0 ? row[idxBalance] : '';
       const debtAmt = idxDebt>=0 ? row[idxDebt] : '';
-      // Skip rows for the other fuel if a Fuel column is present
-      if (idxFuel>=0 && fuel && fuel !== activeFuel) continue;
       if (!date||!balance) continue;
       const parts=date.split('/');
       if (parts.length!==3) continue;
       const dt=parts[2]+'-'+parts[1].padStart(2,'0')+'-'+parts[0].padStart(2,'0')+'T'+(time||'00:00');
       const bal=parseFloat(balance);
       if (isNaN(bal)) continue;
+
+      const bucket = bucketFor(rowFuel);
       const key=dt+'|'+bal.toFixed(2);
-      if (existingKeys.has(key)) continue;
+      if (bucket.keys.has(key)) { duplicatesSkipped++; continue; } // duplicate WITHIN this fuel only
       const entry={id:Date.now()+i,type:type||'reading',datetime:dt,balance:bal.toFixed(2)};
       if ((type==='topup')&&addedAmt){ const a=parseFloat(addedAmt); if(!isNaN(a)) entry.added=a.toFixed(2); }
       if ((type==='topup')&&debtAmt){ const dRec=parseFloat(debtAmt); if(!isNaN(dRec)&&dRec>0) entry.debtRecovered=dRec.toFixed(2); }
-      existing.push(entry); existingKeys.add(key); added++;
+      bucket.entries.push(entry); bucket.keys.add(key); perFuelAdded[rowFuel] = (perFuelAdded[rowFuel]||0) + 1;
     }
-    saveEntries(existing); input.value='';
-    openModal('Import complete',added+' new entries imported (duplicates skipped).',()=>{ showPage('history'); });
+
+    // Save each fuel's updated list to its own storage key.
+    Object.keys(perFuelExisting).forEach(fuel => saveEntries(perFuelExisting[fuel], fuel));
+    input.value='';
+
+    // Honest per-fuel breakdown, per the doc's exact example wording,
+    // rather than a single combined count that hides which fuel got what.
+    const fuelsImported = Object.keys(perFuelAdded).filter(f => perFuelAdded[f] > 0);
+    let summary;
+    if (fuelsImported.length === 0) {
+      summary = duplicatesSkipped > 0
+        ? 'No new entries \u2014 all ' + duplicatesSkipped + ' row' + (duplicatesSkipped===1?'':'s') + ' were duplicates.'
+        : 'No new entries found (rows were unreadable).';
+    } else {
+      summary = 'Import complete \u2014 ' + fuelsImported.map(f => perFuelAdded[f] + ' ' + f).join(', ') + '.';
+      if (duplicatesSkipped > 0) summary += ' ' + duplicatesSkipped + ' duplicate' + (duplicatesSkipped===1?'':'s') + ' skipped.';
+    }
+    // Mention any fuel that isn't currently tracked but received rows
+    // anyway, per the doc's "import it anyway and mention it" instruction.
+    const untracked = fuelsImported.filter(f => !trackedFuels().includes(f));
+    if (untracked.length) {
+      summary += ' Note: ' + untracked.join(' and ') + ' ' + (untracked.length===1?'is':'are') +
+        ' not currently in your tracked meters (Settings \u2192 Meters I track) \u2014 the data is saved but its screens are hidden.';
+    }
+    openModal('Import complete', summary, ()=>{ showPage('history'); });
   };
   reader.readAsText(file);
 }
 
-function doReset() { localStorage.removeItem(entriesKey()); showPage('meter'); }
+// §4.3 — Data (import/export/reset) is classified as global in the doc's
+// own §4.3 grouping, not per-fuel. A reset that only cleared activeFuel
+// while leaving other tracked fuels' data untouched would be a confusing
+// half-measure for what's meant to be a full, deliberate wipe.
+function doReset() {
+  trackedFuels().forEach(fuel => localStorage.removeItem(entriesKey(fuel)));
+  showPage('meter');
+}
 
 function openModal(title,msg,onConfirm) {
   document.getElementById('modal-title').textContent=title;
@@ -2166,7 +2982,13 @@ function submitManualTopup() {
   const addedVal=parseFloat(added),afterVal=parseFloat(after);
   if (isNaN(addedVal)||addedVal<=0) { errEl.textContent='Enter a valid amount added.'; errEl.style.display='block'; return; }
   if (isNaN(afterVal)||afterVal<0) { errEl.textContent='Enter a valid balance.'; errEl.style.display='block'; return; }
-  const entries=loadEntries();
+  // §5.7 — fuel comes from the selector when multi-fuel (the audit that
+  // deleted the header toggle found this form would otherwise be
+  // permanently stuck on activeFuel, which never changes anymore), or
+  // the single tracked fuel otherwise.
+  const fuelSelect = document.getElementById('tu-fuel');
+  const fuel = (isMultiFuel() && fuelSelect && fuelSelect.value) ? fuelSelect.value : trackedFuels()[0];
+  const entries=loadEntries(fuel);
 
   // §6.2 — find whichever entry chronologically precedes this new one, since
   // a manual/backdated top-up isn't necessarily right after the most recent
@@ -2178,13 +3000,13 @@ function submitManualTopup() {
 
   const newEntry = {id:Date.now(),type:'topup',datetime:dt,balance:afterVal.toFixed(2),added:addedVal.toFixed(2)};
   entries.push(newEntry);
-  saveEntries(entries);
+  saveEntries(entries, fuel);
   document.getElementById('tu-dt').value=toInputVal(new Date());
   document.getElementById('tu-added').value='';
   document.getElementById('tu-after').value='';
 
   if (prevBal != null) {
-    maybeOfferDebtReconciliation(newEntry.id, prevBal, addedVal, afterVal);
+    maybeOfferDebtReconciliation(newEntry.id, prevBal, addedVal, afterVal, fuel);
   }
   renderHistory();
 }
@@ -2211,6 +3033,12 @@ function submitManualTopup() {
     }
   } catch(err) { console.warn('Migration error:', err); }
 })();
+
+// §2 — infer meter-tracked-fuels on first load if it has never been set.
+// Must run after the old-key migration above (so meter-entries-gas
+// reflects real data before this checks it) and before anything else in
+// the boot sequence calls trackedFuels()/isMultiFuel().
+inferTrackedFuelsIfNeeded();
 
 applyFuelTheme();
 updateTimestamp();
@@ -2283,8 +3111,8 @@ checkForRestoreOpportunity();
 // when there isn't yet enough history — matching how every other
 // data-dependent feature in this app behaves when it doesn't have
 // enough to say something honest.
-function compareToUsualHTML(entries, referenceDate) {
-  const cmp = calcCompareToUsual(entries, referenceDate);
+function compareToUsualHTML(entries, referenceDate, fuel) {
+  const cmp = calcCompareToUsual(entries, referenceDate, fuel);
   if (!cmp) return '';
   const absDiff = Math.abs(cmp.diff);
   if (absDiff < 0.05) {
@@ -2296,10 +3124,14 @@ function compareToUsualHTML(entries, referenceDate) {
     'This week: \u00a3'+cmp.thisWeek.toFixed(2)+' \u2014 that\u2019s <strong style="color:'+dirColour+'">\u00a3'+absDiff.toFixed(2)+' '+dir+'</strong> than your usual week</div>';
 }
 
-function backupNudgeHTML() {
-  const lastBackup = parseInt(localStorage.getItem('meter-last-backup-' + activeFuel) || '0', 10);
+// Phase 6.5 §6 audit: every call site (buildFuelCard, and the two
+// .some()/.find() loops in renderMeter's alert composition) already
+// passes an explicit fuel from a loop variable. Defensive fallback only.
+function backupNudgeHTML(fuel) {
+  fuel = fuel || activeFuel;
+  const lastBackup = parseInt(localStorage.getItem('meter-last-backup-' + fuel) || '0', 10);
   const daysSince = lastBackup ? (Date.now() - lastBackup) / 86400000 : Infinity;
-  if (loadEntries().length === 0 || daysSince < 30) return '';
+  if (loadEntries(fuel).length === 0 || daysSince < 30) return '';
   const message = lastBackup ? "You haven't backed up in " + Math.floor(daysSince) + ' days' : "You've never backed up";
   return '<div class="alert-banner warn backup-nudge"><div class="alert-icon warn">' + icon('warning') + '</div>' +
     '<div><div class="alert-main warn">' + message + '</div>' +
@@ -2312,19 +3144,20 @@ function backupNudgeHTML() {
 // make forecasts honest about what data they had, but this specific
 // message is about how stale the data itself has become, so it needs
 // the real present moment or it would always read "0 days ago".
-function freshnessPromptHTML(lastReadingDate) {
+function freshnessPromptHTML(lastReadingDate, fuelLabel) {
   const daysSince = (Date.now() - lastReadingDate.getTime()) / 86400000;
   if (daysSince < 2) return ''; // recent enough that saying anything would just be noise
   const days = Math.floor(daysSince);
   const dayWord = days === 1 ? 'day' : 'days';
+  const prefix = fuelLabel ? fuelLabel + ': ' : '';
   if (daysSince >= 5) {
     return '<div class="alert-banner danger"><div class="alert-icon danger">' + icon('warning') + '</div>' +
-      '<div><div class="alert-main danger">Last reading ' + days + ' ' + dayWord + ' ago \u2014 the forecast is losing accuracy</div>' +
+      '<div><div class="alert-main danger">' + prefix + 'Last reading ' + days + ' ' + dayWord + ' ago \u2014 the forecast is losing accuracy</div>' +
       '<div class="alert-sub">Add a reading above to bring it back on track</div></div></div>';
   }
   // Soft line below the escalation threshold — plain text, not a banner,
   // per the doc's own framing.
-  return '<div style="font-size:12px;color:var(--text3);padding:4px 2px 0">Last reading ' + days + ' ' + dayWord + ' ago \u2014 add one to keep the forecast accurate.</div>';
+  return '<div style="font-size:12px;color:var(--text3);padding:4px 2px 0">' + prefix + 'Last reading ' + days + ' ' + dayWord + ' ago \u2014 add one to keep the forecast accurate.</div>';
 }
 
 // Wire file input via addEventListener for mobile compatibility
