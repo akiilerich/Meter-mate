@@ -8,6 +8,15 @@
   <meta name="apple-mobile-web-app-title" content="Meter" />
   <meta name="theme-color" content="#7B6EF6" />
   <link rel="manifest" href="./manifest.webmanifest" />
+  <!-- iOS Safari does not reliably take home-screen icons from the web
+       manifest — it looks for this tag. Without it, adding to the home
+       screen on an iPhone yields a screenshot of the page instead of the
+       icon. Served as a real file rather than a data: URI, which iOS also
+       does not reliably accept here. 180x180 is the modern iOS size, and
+       the source is the MASKABLE manifest icon because it is fully opaque:
+       iOS composites a transparent touch icon onto black and applies its
+       own rounded-corner mask. -->
+  <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
   <title>Meter</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -27,6 +36,11 @@
          swap the token, not the design intent. Dark mode keeps the
          bright originals since they already clear 4.5:1 there. */
       --amber-text:#936315; --red-text:#A84A4A; --green-text:#2E7C64;
+      /* Same reasoning for purple. --purple #7B6EF6 is 3.89:1 on --surface
+         and 3.67:1 on --surface2 — fine as a border, focus ring, or icon
+         fill, but under AA's 4.5:1 for small text, and it was being used
+         as a `color` on 12px nav labels and 12-13px action links. */
+      --purple-text:#5B4DD8;
       --shadow:0 2px 12px rgba(123,110,246,0.10);
       --shadow-lg:0 8px 32px rgba(123,110,246,0.15);
       --radius:16px; --radius-sm:10px; --radius-pill:999px;
@@ -35,6 +49,9 @@
       --bg:#0E0F1E; --surface:#181929; --surface2:#1F2138; --border:#2A2D4A;
       --text:#EEEEFF; --text2:#A2A7CE; --text3:#8B90B8;
       --amber-text:#F5A623; --red-text:#F06A6A; --green-text:#4ECFA8;
+      /* Dark needs a lighter purple, not the same darker one — #5B4DD8 on
+         #181929 is only 2.1:1. This clears 7:1. */
+      --purple-text:#A79DFF;
       --shadow:0 2px 12px rgba(0,0,0,0.35);
     }
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
@@ -133,7 +150,7 @@
     .balance-hero-runout .runout-date{font-size:15px;}
     .plan-topup-btn{
       width:100%;margin-top:14px;background:var(--surface2);border:1.5px solid var(--border);
-      border-radius:var(--radius-pill);color:var(--purple);font-family:inherit;font-size:13px;
+      border-radius:var(--radius-pill);color:var(--purple-text);font-family:inherit;font-size:13px;
       font-weight:700;padding:11px;cursor:pointer;
     }
     .plan-topup-btn:active{opacity:0.8;}
@@ -158,7 +175,7 @@
       color:var(--text);padding:11px 10px;font-family:inherit;-webkit-appearance:none;min-width:0;
     }
     .planner-result{font-size:14px;color:var(--text);margin-top:10px;line-height:1.5;min-height:20px;}
-    .planner-result strong{font-size:18px;color:var(--purple);font-weight:800;}
+    .planner-result strong{font-size:18px;color:var(--purple-text);font-weight:800;}
     .planner-result .planner-sub{font-size:12px;color:var(--text3);display:block;margin-top:2px;}
     .planner-result.empty{color:var(--text3);font-size:12px;}
 
@@ -167,7 +184,7 @@
     .stat-box{background:var(--surface2);border-radius:var(--radius-sm);padding:12px 14px;}
     .stat-label{font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;}
     .stat-value{font-size:17px;font-weight:700;color:var(--text);}
-    .stat-value.accent{color:var(--purple);}
+    .stat-value.accent{color:var(--purple-text);}
     .stat-value.green{color:var(--green-text);}
     .stat-value.red{color:var(--red-text);}
     .stat-sub{font-size:12px;color:var(--text3);margin-top:2px;}
@@ -240,7 +257,7 @@
     .quick-save-fuel-btn.fuel-gas{background:linear-gradient(135deg,#936315,#903F3F);}
     .quick-meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;}
     .quick-meta span{font-size:12px;color:var(--text3);}
-    .quick-adjust-btn{background:none;border:none;color:var(--purple);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0;}
+    .quick-adjust-btn{background:none;border:none;color:var(--purple-text);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;padding:0;}
     .quick-dt-row{max-height:0;overflow:hidden;transition:max-height 0.2s ease;}
     .quick-dt-row.open{max-height:60px;}
     .quick-dt-input{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);padding:9px 12px;font-size:14px;font-family:inherit;outline:none;margin-top:8px;}
@@ -275,7 +292,7 @@
     .btn-xs{background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-pill);color:var(--text2);font-family:inherit;font-size:12px;font-weight:600;padding:4px 10px;cursor:pointer;}
     .btn-xs.del{color:var(--red-text);border-color:#F06A6A33;background:#FEEAEA44;}
     .dark .btn-xs.del{background:#2E1A1A55;}
-    .btn-show-more{background:none;border:none;color:var(--purple);font-family:inherit;font-size:12px;font-weight:600;padding:10px 0 2px;cursor:pointer;display:block;width:100%;text-align:center;}
+    .btn-show-more{background:none;border:none;color:var(--purple-text);font-family:inherit;font-size:12px;font-weight:600;padding:10px 0 2px;cursor:pointer;display:block;width:100%;text-align:center;}
     .btn-cancel{flex:1;background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius-pill);color:var(--text2);font-family:inherit;font-size:13px;font-weight:600;padding:10px;cursor:pointer;}
     .btn-save{flex:1;background:var(--grad);border:none;border-radius:var(--radius-pill);color:#fff;font-family:inherit;font-size:13px;font-weight:700;padding:10px;cursor:pointer;}
 
@@ -292,17 +309,52 @@
     .month-table th:not(:first-child){text-align:right;}
     .month-table td{padding:9px 0;border-top:1px solid var(--border);color:var(--text);font-weight:500;}
     .month-table td:not(:first-child){text-align:right;}
-    .month-table td:nth-child(2){color:var(--purple);font-weight:700;}
+    .month-table td:nth-child(2){color:var(--purple-text);font-weight:700;}
     .month-table td:nth-child(3){color:var(--green-text);font-weight:700;}
 
     /* History entries */
     .entry-row{display:flex;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);}
     .entry-row:last-of-type{border-bottom:none;}
-    .entry-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-right:12px;}
+    /* Wrapper exists only to anchor the top-up pip to the square's corner. */
+    .entry-icon-wrap{position:relative;flex-shrink:0;margin-right:12px;}
+    .entry-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
     .entry-icon.reading{background:#EEF0FF;}
     .entry-icon.topup{background:#E6FBF5;}
     .dark .entry-icon.reading{background:#252640;}
     .dark .entry-icon.topup{background:#1A2E28;}
+    /* Glyph colour reinforces fuel, using the same two hues as the left
+       edge so the square and the edge agree. Set on the wrapper so it is
+       inherited by the SVG's currentColor fill. */
+    .entry-icon-wrap.fuel-electricity{color:var(--purple-text);}
+    .entry-icon-wrap.fuel-gas{color:var(--amber-text);}
+    /* Top-up pip — small enough not to fight the glyph, high-contrast
+       enough to read at a glance. Sits half-off the square's corner. */
+    .entry-pip{position:absolute;right:-3px;bottom:-3px;width:16px;height:16px;border-radius:50%;
+      background:var(--green-text);color:#FFFFFF;font-size:11px;font-weight:800;line-height:16px;
+      text-align:center;border:2px solid var(--surface);box-sizing:content-box;}
+    .dark .entry-pip{background:#4ECFA8;color:#0E2A22;border-color:var(--surface);}
+    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+    /* Standing charge rate series. Stacks under its label rather than
+       sitting beside it, since a row of date + amount + unit + remove
+       will not fit the settings row's right-hand column on a phone. */
+    .settings-row-block{display:block;}
+    .sc-rate-list{margin-top:10px;display:flex;flex-direction:column;gap:8px;}
+    .sc-rate-row{display:flex;align-items:center;gap:6px;}
+    .sc-rate-date{flex:1 1 auto;min-width:0;text-align:left;}
+    .sc-rate-pence{width:72px;flex:0 0 auto;text-align:right;}
+    .sc-rate-unit{font-size:12px;color:var(--text3);flex:0 0 auto;}
+    .sc-rate-spacer{width:28px;flex:0 0 auto;}
+    /* Entry note — quiet by default, so a list with many notes still
+       scans as a list of numbers rather than a wall of text. */
+    .entry-note{font-size:12px;color:var(--text2);margin-top:4px;font-style:italic;line-height:1.4;}
+    /* Emergency credit banner. Deliberately louder than the low-balance
+       note beneath the hero number: low balance is a warning about the
+       future, this is a statement about the present. */
+    .ec-banner{display:flex;gap:10px;align-items:flex-start;margin:14px 0 2px;padding:12px 14px;
+      border-radius:var(--radius-sm);background:#FDECEC;color:var(--red-text);font-size:13px;line-height:1.45;}
+    .dark .ec-banner{background:#3A1E1E;color:#F5B5B5;}
+    .ec-banner strong{display:block;font-weight:700;margin-bottom:2px;}
+    .ec-sub{font-weight:400;opacity:0.95;}
     .entry-body{flex:1;min-width:0;}
     .entry-main{font-size:14px;font-weight:700;color:var(--text);}
     .entry-sub{font-size:12px;color:var(--text3);margin-top:2px;}
@@ -335,7 +387,7 @@
     .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);display:flex;justify-content:space-around;padding:8px 0 14px;z-index:100;box-shadow:0 -8px 24px rgba(0,0,0,0.08);max-width:480px;margin:0 auto;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
     .nav-btn{background:none;border:none;color:var(--text3);font-family:inherit;font-size:12px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;padding:2px 0;flex:1;transition:color 0.15s;}
     .nav-icon{font-size:22px;line-height:1;transition:transform 0.15s;}
-    .nav-btn.active{color:var(--purple);}
+    .nav-btn.active{color:var(--purple-text);}
     .nav-btn.active .nav-icon{transform:scale(1.15);}
 
     /* Bottom sheet */
@@ -381,7 +433,7 @@
       padding:7px 14px; cursor:pointer; flex-shrink:0; margin-left:auto;
     }
     .dark .toast{background:var(--surface2); color:var(--text); box-shadow:0 8px 24px rgba(0,0,0,0.5);}
-    .dark .toast #toast-undo-btn{background:rgba(123,110,246,0.25); color:var(--purple);}
+    .dark .toast #toast-undo-btn{background:rgba(123,110,246,0.25); color:var(--purple-text);}
     @media (prefers-reduced-motion: reduce) { .toast { animation:none; } }
 
     /* Modal */
@@ -400,7 +452,9 @@
     .empty-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;}
     .empty-sub{font-size:12px;color:var(--text3);}
     .pill{display:inline-block;border-radius:var(--radius-pill);font-size:12px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:3px 10px;}
-    .pill-purple{background:#EEF0FF;color:var(--purple);}
+    .pill-purple{background:#EEF0FF;color:var(--purple-text);}
+    .pill-amber{background:#FDF1DC;color:var(--amber-text);}
+    .dark .pill-amber{background:#3A2E15;color:var(--amber-text);}
     .pill-green{background:#E6FBF5;color:var(--green-text);}
     .dark .pill-purple{background:#252640;color:#A89EFF;}
     .dark .pill-green{background:#1A2E28;color:#4ECFA8;}
@@ -455,7 +509,7 @@
         <div class="quick-label" id="quick-label">Electricity meter balance</div>
         <div class="quick-input-row">
           <div class="quick-pound">&#163;</div>
-          <input type="text" inputmode="decimal" id="q-amt" placeholder="0.00" onkeydown="if(event.key==='Enter')quickSaveDefault()" />
+          <input type="text" inputmode="numeric" class="js-currency" id="q-amt" placeholder="0.00" onkeydown="if(event.key==='Enter')quickSaveDefault()" />
         </div>
         <!-- §5.1/§5.2(a) — populated dynamically by renderQuickSaveButtons()
              since the count and layout depend on trackedFuels(). Single-fuel
@@ -542,6 +596,19 @@
     <div class="gear-section-title">Log a top-up manually</div>
     <div class="card">
       <div style="font-size:12px;color:var(--text3);margin-bottom:14px;line-height:1.5">Use this to backdate a top-up or add one that was not auto-detected.</div>
+      <!-- Meter swap. When the supplier replaces the meter, the new one's
+           balance has no arithmetic relationship to the old one's, so the
+           entry has to be typed as a break in the chain rather than
+           guessed at from the numbers. Choosing it hides the amount field,
+           since nothing was "added" — there is just a new meter with a
+           balance on it. -->
+      <div class="field">
+        <label>Entry type</label>
+        <select id="tu-kind" class="settings-input" style="width:100%;text-align:left" onchange="tuKindChanged()">
+          <option value="topup">Top-up</option>
+          <option value="swap">Meter replaced</option>
+        </select>
+      </div>
       <!-- §5.7 audit finding — with activeFuel now fixed permanently at
            'electricity' (the toggle that used to change it is gone), this
            form needs its own explicit fuel choice or it could never log a
@@ -553,8 +620,8 @@
       </div>
       <div class="field"><label>Date &amp; time</label><input type="datetime-local" id="tu-dt" /></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="field" style="margin-bottom:0"><label>Amount added (&#163;)</label><input type="number" id="tu-added" min="0" step="0.01" placeholder="50.00" /></div>
-        <div class="field" style="margin-bottom:0"><label>Balance after (&#163;)</label><input type="number" id="tu-after" min="0" step="0.01" placeholder="52.46" /></div>
+        <div class="field" style="margin-bottom:0" id="tu-added-field"><label>Amount added (&#163;)</label><input type="text" inputmode="numeric" class="js-currency" id="tu-added" placeholder="50.00" /></div>
+        <div class="field" style="margin-bottom:0"><label id="tu-after-label">Balance after (&#163;)</label><input type="text" inputmode="numeric" class="js-currency" id="tu-after" placeholder="52.46" /></div>
       </div>
       <div class="field-error" id="tu-err" style="margin-top:8px"></div>
       <button class="btn-primary green-grad" style="margin-top:14px" onclick="submitManualTopup()">Save top-up</button>
@@ -614,7 +681,7 @@
         <li>ACE9000 prepayment meter (British Gas)</li>
       </ul>
     </div>
-    <div class="version-tag">v4.3 &#183; ACE9000 &#183; British Gas</div>
+    <div class="version-tag">v4.7 &#183; ACE9000 &#183; British Gas</div>
   </div>
 </div>
 
@@ -624,7 +691,7 @@
     <div class="sheet-handle"></div>
     <h3 id="ts-title">Did you top up?</h3>
     <p id="ts-msg">Your balance went up &#8212; looks like you may have topped up. How much did you add?</p>
-    <div class="field"><label>Amount added (&#163;)</label><input type="number" id="ts-added" min="0" step="0.01" placeholder="e.g. 50.00" /></div>
+    <div class="field"><label>Amount added (&#163;)</label><input type="text" inputmode="numeric" class="js-currency" id="ts-added" placeholder="e.g. 50.00" /></div>
     <div class="sheet-btns">
       <button class="btn-primary green-grad" onclick="confirmTopup()">Yes, log top-up</button>
       <button class="btn-ghost" onclick="dismissTopupSheet()" style="width:100%;text-align:center;margin-top:2px">No, just a correction</button>
@@ -651,7 +718,7 @@
       <label class="planner-label">If I add</label>
       <div class="planner-amount-row">
         <span class="planner-pound">&#163;</span>
-        <input type="number" id="planner-amount" min="0" step="0.01" placeholder="50.00" oninput="plannerAmountChanged()" />
+        <input type="text" inputmode="numeric" class="js-currency" id="planner-amount" placeholder="50.00" oninput="plannerAmountChanged()" />
       </div>
       <div class="planner-result" id="planner-amount-result"></div>
     </div>
@@ -679,7 +746,7 @@
 <div class="toast" id="save-toast" role="status" aria-live="polite">
   <div class="toast-row">
     <span id="toast-msg"></span>
-    <button id="toast-undo-btn" onclick="undoLastSave()">Undo</button>
+    <button id="toast-undo-btn" onclick="toastUndo()">Undo</button>
   </div>
   <div class="toast-trend" id="toast-trend" style="display:none"></div>
 </div>
@@ -885,6 +952,121 @@ const ICONS = {
 };
 function icon(name) { return ICONS[name] || ''; }
 
+// ── Right-to-left currency entry ──────────────────────────
+// Every money field in the app uses fixed-position, right-to-left digit
+// entry — the pattern banking apps and microwave timers use. Digits land
+// in the pence column and push everything left:
+//
+//   4 -> 0.04      2 -> 0.42      1 -> 4.21      5 -> 42.15
+//
+// Backspace reverses it exactly (42.15 -> 4.21). There is no decimal
+// point to type, so "is that £4.20 or £420?" can't happen, and the
+// keypad can be inputmode="numeric" rather than "decimal" — no stray
+// separator key, and no locale ambiguity between "." and ",".
+//
+// Implemented by delegation on document rather than per-element, because
+// the edit form and the top-up planner are rendered from innerHTML and
+// would otherwise need re-attaching on every render.
+//
+// The authoritative state is the digit string in dataset.digits; the
+// element's value is only ever a formatted view of it.
+const CURRENCY_MAX_DIGITS = 6; // up to 9999.99 — far beyond any meter balance
+
+function currencyFormat(digits) {
+  const d = digits.replace(/^0+(?=\d{3})/, ''); // trim leading zeros, keep 0.xx intact
+  if (!d) return '';
+  const p = d.padStart(3, '0');
+  return p.slice(0, -2) + '.' + p.slice(-2);
+}
+function currencyDigitsFrom(value) {
+  // Seed from a pre-filled value (the edit form) — "7.5" becomes "750",
+  // not "75", so the existing amount is preserved rather than shifted.
+  const n = parseFloat(String(value).replace(/[^0-9.]/g, ''));
+  if (isNaN(n)) return '';
+  return String(Math.round(n * 100)).slice(0, CURRENCY_MAX_DIGITS);
+}
+function currencyApply(el, digits) {
+  el.dataset.digits = digits;
+  el.value = currencyFormat(digits);
+  // Caret pinned to the end — this is fixed-position entry, so there is
+  // no meaningful cursor position anywhere else.
+  try { const n = el.value.length; el.setSelectionRange(n, n); } catch (_) {}
+  // Fields like the planner amount carry their own oninput handler, and
+  // preventDefault below means the browser never fires one. Dispatch it
+  // manually, guarded so the fallback listener doesn't re-enter.
+  el.dataset.syncing = '1';
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+  delete el.dataset.syncing;
+}
+function isCurrencyField(el) {
+  return el && el.classList && el.classList.contains('js-currency');
+}
+
+document.addEventListener('focusin', e => {
+  const el = e.target;
+  if (!isCurrencyField(el)) return;
+  if (el.dataset.digits === undefined) currencyApply(el, currencyDigitsFrom(el.value));
+});
+
+document.addEventListener('beforeinput', e => {
+  const el = e.target;
+  if (!isCurrencyField(el)) return;
+  const cur = el.dataset.digits !== undefined ? el.dataset.digits : currencyDigitsFrom(el.value);
+
+  if (e.inputType === 'insertText' || e.inputType === 'insertCompositionText') {
+    e.preventDefault();
+    const typed = (e.data || '').replace(/\D/g, ''); // a typed "." or "," is simply ignored
+    if (!typed) return;
+    currencyApply(el, (cur + typed).slice(-CURRENCY_MAX_DIGITS));
+  } else if (e.inputType === 'deleteContentBackward' || e.inputType === 'deleteContentForward') {
+    e.preventDefault();
+    currencyApply(el, cur.slice(0, -1));
+  } else if (e.inputType === 'insertFromPaste' || e.inputType === 'insertFromDrop') {
+    e.preventDefault();
+    const pasted = e.data || (e.dataTransfer && e.dataTransfer.getData('text')) || '';
+    currencyApply(el, currencyDigitsFrom(pasted));
+  } else if (e.inputType && e.inputType.indexOf('delete') === 0) {
+    e.preventDefault();
+    currencyApply(el, ''); // select-all + delete clears the field
+  }
+});
+
+// Fallback for any IME or browser that doesn't deliver beforeinput with a
+// usable inputType. Reconstructs intent by comparing the field's digits to
+// the digits we last wrote: longer means something was typed, shorter
+// means something was deleted.
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (!isCurrencyField(el) || el.dataset.syncing) return;
+  const prev = el.dataset.digits || '';
+  const now = el.value.replace(/\D/g, '');
+  if (now === prev.replace(/^0+(?=\d{3})/, '')) return; // already consistent
+  if (now.length > prev.length) {
+    const added = now.slice(prev.length) || now.slice(-1);
+    currencyApply(el, (prev + added).slice(-CURRENCY_MAX_DIGITS));
+  } else {
+    currencyApply(el, prev.slice(0, -1));
+  }
+});
+
+// Called after any render that injects currency fields, and whenever a
+// field is cleared programmatically, so dataset.digits never goes stale
+// against a value set elsewhere in the code.
+function currencyReset(el, value) {
+  if (!el) return;
+  if (value === undefined || value === null || value === '') {
+    el.dataset.digits = '';
+    el.value = '';
+  } else {
+    currencyApply(el, currencyDigitsFrom(value));
+  }
+}
+function currencySyncAll(root) {
+  (root || document).querySelectorAll('.js-currency').forEach(el => {
+    el.dataset.digits = currencyDigitsFrom(el.value);
+  });
+}
+
 // ── Date helpers ──────────────────────────────────────────
 function parseLocal(str) {
   const d = new Date(str);
@@ -909,6 +1091,23 @@ function monthKey(date) { return date.getFullYear()+'-'+String(date.getMonth()+1
 function monthLabel(key) { const [y,m]=key.split('-'); return new Date(+y,+m-1,1).toLocaleString('en-GB',{month:'short',year:'numeric'}); }
 function dayKey(date) { const pad=n=>String(n).padStart(2,'0'); return date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate()); }
 function startOfDay(date) { return new Date(date.getFullYear(),date.getMonth(),date.getDate()); }
+// Advance to local midnight of the NEXT calendar day.
+//
+// Never do this with `+ 86400000`. A UK day is not always 24 hours: on the
+// last Sunday in October the clocks go back and the day is 25 hours long
+// (and 23 hours in March). Stepping by a fixed 86,400,000 ms drifts an
+// hour at each changeover, which duplicated one day's key and shifted
+// every subsequent day boundary to 23:00 the previous evening. With a
+// flat £2/day dataset across 25 Oct 2026 that produced £1.96 on the 24th
+// and £3.04 on the 25th — a 52% phantom spike on the chart, and a
+// poisoned baseline for the trailing-average trend comparison.
+//
+// Constructing the date from its components lets the engine resolve the
+// offset for that specific local day, so midnight stays midnight.
+function nextDay(date) { return new Date(date.getFullYear(), date.getMonth(), date.getDate()+1); }
+// End of the local day `date` starts — i.e. the next midnight, in ms.
+// Length varies (23h/24h/25h) and that is the point.
+function endOfDayMs(date) { return nextDay(date).getTime(); }
 
 // ── Daily usage interpolation ─────────────────────────────
 // §3 — takes an explicit fuel parameter (defaulting to activeFuel so
@@ -928,7 +1127,7 @@ function calcDailyUsage(entries, fuel) {
     let cur = startOfDay(new Date(firstMs));
     while (cur.getTime() < lastMs) {
       days[dayKey(cur)] = 0;
-      cur = new Date(cur.getTime() + 86400000);
+      cur = nextDay(cur); // DST-safe — see nextDay()
     }
   }
   function spreadSpend(spent, startMs, endMs) {
@@ -937,11 +1136,11 @@ function calcDailyUsage(entries, fuel) {
     let cursor = startOfDay(new Date(startMs));
     while (cursor.getTime() < endMs) {
       const dayStart = Math.max(cursor.getTime(), startMs);
-      const dayEnd = Math.min(cursor.getTime() + 86400000, endMs);
+      const dayEnd = Math.min(endOfDayMs(cursor), endMs);
       const frac = (dayEnd - dayStart) / totalMs;
       const k = dayKey(cursor);
       days[k] = (days[k] || 0) + spent * frac;
-      cursor = new Date(cursor.getTime() + 86400000);
+      cursor = nextDay(cursor); // DST-safe — see nextDay()
     }
   }
   for (let i = 1; i < sorted.length; i++) {
@@ -950,9 +1149,30 @@ function calcDailyUsage(entries, fuel) {
     const startMs = parseLocal(prev.datetime).getTime();
     const endMs = parseLocal(curr.datetime).getTime();
     if (endMs <= startMs) continue;
-    if (cb < pb) {
-      spreadSpend(pb - cb, startMs, endMs);
-    } else if (curr.type === 'topup' && curr.added != null) {
+    // A meter swap breaks the chain deliberately.
+    //
+    // When the supplier replaces the meter, the balance on the new one
+    // has no arithmetic relationship to the balance on the old one. Left
+    // untyped, a replacement reading either looks like an enormous day of
+    // usage (new meter lower) or gets silently ignored (new meter higher,
+    // no `added`) — and in both cases the gap either side is nonsense.
+    // Skipping the span means no usage is attributed across the swap
+    // itself, while everything before and after stays intact.
+    if (curr.type === 'swap') continue;
+    // Top-up is checked FIRST, before the simple cb < pb case.
+    //
+    // The old order tested `cb < pb` first, which quietly mis-handled any
+    // top-up where the balance still ended lower than it started — e.g.
+    // £50 on the meter, add £10, read £45. That IS a top-up (£10 went on),
+    // but because 45 < 50 the first branch caught it and spread only
+    // £5, ignoring both `added` and `debtRecovered` entirely. True usage
+    // there is £15. Small top-ups onto a healthy balance and debt-recovery
+    // top-ups are exactly the cases that hit it.
+    //
+    // Ordering by entry TYPE rather than by balance direction is the fix:
+    // what happened is decided by what the entry says it is, not by which
+    // way the number happened to move.
+    if (curr.type === 'topup' && curr.added != null) {
       // §6.2 — a confirmed debtRecovered amount is money that paid off
       // emergency credit / accrued standing charge while off-supply, not
       // electricity used in the days before the top-up. Strip it out
@@ -963,21 +1183,29 @@ function calcDailyUsage(entries, fuel) {
       const debtRecovered = curr.debtRecovered != null ? parseFloat(curr.debtRecovered) : 0;
       const drained = pb + parseFloat(curr.added) - cb - debtRecovered;
       spreadSpend(drained, startMs, endMs);
+    } else if (cb < pb) {
+      spreadSpend(pb - cb, startMs, endMs);
     }
   }
   // Standing charge. `gross` is what actually drained off the meter and is
   // what the run-out forecast must use. `value` strips the standing charge
-  // out to give electricity-only usage, for the charts.
+  // out to give usage only, for the charts.
+  //
+  // The rate is looked up PER DAY from a dated series, not taken as one
+  // current value applied to all of history. Ofgem's cap moves quarterly,
+  // so a single stored figure meant that updating it in January silently
+  // rewrote every chart back to the previous summer — showing a standing
+  // charge that wasn't being paid at the time. The lookup makes old data
+  // stay true to what it cost then.
   //
   // The deduction carries a running deficit rather than being clamped per
   // day, so a quiet day can't silently swallow part of the standing charge
   // and leave the totals failing to reconcile against the real balance.
-  const s = loadSettings(fuel);
-  const sc = parseFloat(s.standingCharge) || 0;
-  const dailySC = sc > 0 ? sc / 7 : 0;
+  const scHistory = standingChargeHistory(fuel);
   let carry = 0;
   return Object.keys(days).sort().map(k => {
     const gross = days[k];
+    const dailySC = standingChargeOn(scHistory, k); // £/day in force on that date
     let value = gross;
     if (dailySC > 0) {
       const owed = dailySC + carry;
@@ -986,6 +1214,124 @@ function calcDailyUsage(entries, fuel) {
     }
     return { key: k, date: new Date(k), value: value, gross: gross };
   });
+}
+
+// ── Standing charge: a dated series, not one current value ─
+// Stored per fuel as settings.scRates — an array of
+//   { from: 'YYYY-MM-DD', pence: <pence per day> }
+// sorted ascending, where `from` is the first day that rate applied.
+//
+// Two problems this solves.
+//
+// 1. Retroactive rewriting. The old single `standingCharge` was applied
+//    to every day ever recorded, so updating it when the price cap moved
+//    silently recalculated all historical charts against a rate that
+//    wasn't in force then. History should stay true to what it cost at
+//    the time.
+//
+// 2. The unit. It was asked for WEEKLY and immediately divided by 7,
+//    while every UK bill and every Ofgem cap figure states it in pence
+//    per day. The app was making the owner do arithmetic to convert a
+//    number printed on their bill into a number the app converted
+//    straight back. Now it's asked for and stored as p/day.
+function standingChargeHistory(fuel) {
+  const s = loadSettings(fuel);
+  if (Array.isArray(s.scRates) && s.scRates.length) {
+    return [...s.scRates]
+      .filter(r => r && r.from && isFinite(parseFloat(r.pence)))
+      .sort((a,b) => a.from.localeCompare(b.from));
+  }
+  // Migration from the legacy weekly-pounds field. Dated from the epoch
+  // so it covers all existing history exactly as before — the numbers
+  // don't move on upgrade, only their structure does.
+  const legacy = parseFloat(s.standingCharge);
+  if (isFinite(legacy) && legacy > 0) {
+    return [{ from: '1970-01-01', pence: (legacy / 7) * 100 }];
+  }
+  return [];
+}
+// £/day in force on a given YYYY-MM-DD.
+function standingChargeOn(history, key) {
+  let rate = 0;
+  for (let i = 0; i < history.length; i++) {
+    if (history[i].from <= key) rate = parseFloat(history[i].pence) / 100;
+    else break;
+  }
+  return rate;
+}
+// The rate applying today — for forecasts and the planner, which are
+// about the future and so always want the newest rate.
+function currentStandingCharge(fuel) {
+  const h = standingChargeHistory(fuel);
+  return h.length ? parseFloat(h[h.length-1].pence) / 100 : 0;
+}
+function saveStandingChargeRates(fuel, rates) {
+  const s = loadSettings(fuel);
+  s.scRates = [...rates].sort((a,b) => a.from.localeCompare(b.from));
+  delete s.standingCharge; // migrated — don't leave a stale value behind
+  saveSettings(s, fuel);
+}
+
+// Settings UI for the rate series. Asked for in p/day to match what's
+// printed on the bill, with each rate carrying the date it took effect.
+// Most people will only ever have one row; the history only grows when
+// the price cap actually moves.
+function scRatesHTML(fuel) {
+  const rates = standingChargeHistory(fuel);
+  const rows = rates.map((r, i) =>
+    '<div class="sc-rate-row">' +
+      '<input class="settings-input sc-rate-date" type="date" value="' + (r.from === '1970-01-01' ? '' : r.from) + '" ' +
+        'onchange="updateSCRate(\'' + fuel + '\',' + i + ',\'from\',this.value)" ' +
+        (r.from === '1970-01-01' ? 'placeholder="from the start"' : '') + ' />' +
+      '<input class="settings-input sc-rate-pence js-currency-plain" type="text" inputmode="decimal" value="' + parseFloat(r.pence).toFixed(2) + '" ' +
+        'onchange="updateSCRate(\'' + fuel + '\',' + i + ',\'pence\',this.value)" /> ' +
+      '<span class="sc-rate-unit">p/day</span>' +
+      (rates.length > 1
+        ? '<button class="btn-xs del" onclick="removeSCRate(\'' + fuel + '\',' + i + ')" aria-label="Remove this rate">\u00d7</button>'
+        : '<span class="sc-rate-spacer"></span>') +
+    '</div>'
+  ).join('');
+  const empty = rates.length ? '' :
+    '<div class="settings-sub" style="margin-bottom:8px">None set \u2014 usage figures will include the standing charge.</div>';
+  return '<div class="settings-row settings-row-block">' +
+      '<div><div class="settings-label">Standing charge (p/day)</div>' +
+      '<div class="settings-sub">As printed on your bill. Add a new row when the rate changes \u2014 past readings keep the rate that applied then.</div></div>' +
+      '<div class="sc-rate-list">' + empty + rows +
+        '<button class="btn-xs" onclick="addSCRate(\'' + fuel + '\')">+ Add a rate change</button>' +
+      '</div>' +
+    '</div>';
+}
+function updateSCRate(fuel, idx, field, value) {
+  const rates = standingChargeHistory(fuel);
+  if (!rates[idx]) return;
+  if (field === 'pence') {
+    const n = parseFloat(value);
+    if (!isFinite(n) || n < 0) { renderSettings(); return; }
+    rates[idx].pence = n;
+  } else {
+    // A blank date means "from the start" — keep the sentinel rather than
+    // writing an empty string that would sort unpredictably.
+    rates[idx].from = value || '1970-01-01';
+  }
+  saveStandingChargeRates(fuel, rates);
+  renderSettings();
+  if (document.getElementById('page-meter').classList.contains('active')) renderMeter();
+}
+function addSCRate(fuel) {
+  const rates = standingChargeHistory(fuel);
+  const last = rates.length ? rates[rates.length-1] : null;
+  // Default the new row to today and carry the previous rate forward, so
+  // the only thing left to do is type the new number.
+  rates.push({ from: dayKey(new Date()), pence: last ? parseFloat(last.pence) : 0 });
+  saveStandingChargeRates(fuel, rates);
+  renderSettings();
+}
+function removeSCRate(fuel, idx) {
+  const rates = standingChargeHistory(fuel);
+  rates.splice(idx, 1);
+  saveStandingChargeRates(fuel, rates);
+  renderSettings();
+  if (document.getElementById('page-meter').classList.contains('active')) renderMeter();
 }
 
 // ── Stats calculation ─────────────────────────────────────
@@ -1021,13 +1367,18 @@ function calcStats(entries, period, fuel) {
     let spent = 0, days = 0;
     for (let i = 0; i < daily.length; i++) {
       const d = daily[i];
-      const dayStartMs = parseLocal(d.key).getTime();
-      const dayEndMs = dayStartMs + 86400000;
+      const dayStart = parseLocal(d.key);
+      const dayStartMs = dayStart.getTime();
+      // Real length of this local day, not an assumed 24h — see nextDay().
+      const dayEndMs = endOfDayMs(dayStart);
+      const dayLenMs = dayEndMs - dayStartMs;
       if (dayEndMs <= fromMs || dayStartMs >= toMs) continue;
       const overlapStart = Math.max(dayStartMs, fromMs);
       const overlapEnd = Math.min(dayEndMs, toMs);
       if (overlapEnd <= overlapStart) continue;
-      const dayFrac = (overlapEnd - overlapStart) / 86400000;
+      // Fraction OF THAT DAY, so a 25-hour day still counts as one day
+      // when fully covered rather than 1.04 of one.
+      const dayFrac = (overlapEnd - overlapStart) / dayLenMs;
       spent += (d[field] || 0) * dayFrac;
       days += dayFrac;
     }
@@ -1313,12 +1664,14 @@ function calcCompareToUsual(entries, referenceDate, fuel) {
     const startMs = endMs - days*86400000;
     let total = 0, covered = 0;
     daily.forEach(d => {
-      const dayStart = parseLocal(d.key).getTime();
-      const dayEnd = dayStart + 86400000;
+      const dayStartD = parseLocal(d.key);
+      const dayStart = dayStartD.getTime();
+      const dayEnd = endOfDayMs(dayStartD); // real day length — see nextDay()
+      const dayLen = dayEnd - dayStart;
       if (dayEnd <= startMs || dayStart >= endMs) return;
       const overlapStart = Math.max(dayStart, startMs);
       const overlapEnd = Math.min(dayEnd, endMs);
-      const frac = (overlapEnd - overlapStart) / 86400000;
+      const frac = (overlapEnd - overlapStart) / dayLen;
       total += d.value * frac;
       covered += frac;
     });
@@ -1620,7 +1973,7 @@ function quickSaveConfirmed(fuel, val) {
     ? 'Saved \u00a3' + val.toFixed(2) + ' to ' + FUEL_LABELS[fuel]
     : 'Saved \u00b7 \u00a3' + val.toFixed(2); // single-fuel wording unchanged from pre-Phase-6
   showSaveToast(toastMsg, entry.id, fuel, trend);
-  amtEl.value = '';
+  currencyReset(amtEl, '');
   // §5.3 — keep focus in the field after saving, so logging both meters
   // is type/tap/type/tap with no navigation in between.
   amtEl.focus();
@@ -1642,7 +1995,7 @@ function quickSaveConfirmed(fuel, val) {
       const diff = (val - prevBal).toFixed(2);
       document.getElementById('ts-title').textContent = 'Did you top up your ' + FUEL_LABELS[fuel].toLowerCase() + '?';
       document.getElementById('ts-msg').textContent = 'Your balance went up by \u00a3' + diff + ' \u2014 did you add credit at a shop?';
-      document.getElementById('ts-added').value = '';
+      currencyReset(document.getElementById('ts-added'), '');
       document.getElementById('topup-sheet-bg').classList.add('open');
     } else {
       renderMeter();
@@ -1703,6 +2056,7 @@ let lastSavedEntryId = null;
 let lastSavedFuel = null;
 
 function showSaveToast(message, entryId, fuel, trend) {
+  lastDeleted = null; // a new save takes ownership of the toast
   lastSavedEntryId = entryId;
   // Phase 6.5 §6 audit: this function's only call site (in
   // quickSaveConfirmed) always passes a real fuel; the fallback here is
@@ -1741,6 +2095,38 @@ function showSaveToast(message, entryId, fuel, trend) {
     lastSavedEntryId = null;
     lastSavedFuel = null;
   }, dismissMs);
+}
+
+// One Undo button, two possible meanings. Whichever action opened the
+// toast most recently owns it — they can't be pending at the same time,
+// because showing either toast clears the other's pending state.
+function toastUndo() {
+  if (lastDeleted) { undoDelete(); return; }
+  undoLastSave();
+}
+function hideToast() {
+  clearTimeout(toastTimeout);
+  const t = document.getElementById('save-toast');
+  if (t) t.classList.remove('open');
+}
+function showDeleteToast(message) {
+  lastSavedEntryId = null; lastSavedFuel = null; // save-undo no longer owns the toast
+  const toast = document.getElementById('save-toast');
+  const msgEl = document.getElementById('toast-msg');
+  const trendEl = document.getElementById('toast-trend');
+  if (!toast || !msgEl) return;
+  msgEl.textContent = message;
+  if (trendEl) { trendEl.textContent = ''; trendEl.style.display = 'none'; }
+  toast.classList.remove('has-trend');
+  toast.classList.add('open');
+  clearTimeout(toastTimeout);
+  // Longer than a save toast: recovering from an accidental delete
+  // matters more than recovering from an accidental save, and the row
+  // has just vanished from under the finger that tapped it.
+  toastTimeout = setTimeout(() => {
+    toast.classList.remove('open');
+    lastDeleted = null;
+  }, 8000);
 }
 
 function undoLastSave() {
@@ -1856,7 +2242,7 @@ function buildFuelCard(fuel) {
   const stats = calcStats(entries, '7d', fuel);
   const lowBalance = parseFloat(settings.lowBalance) || 10;
   const topupRemind = parseFloat(settings.topupRemind) || 5;
-  const sc = parseFloat(settings.standingCharge) || 0;
+  const sc = currentStandingCharge(fuel); // £/day, newest rate — used only to decide whether to show the 'usage only' note
   const multi = isMultiFuel();
   const fuelHeading = multi ? '<div class="gear-section-title" style="margin-top:18px">'+FUEL_LABELS[fuel]+'</div>' : '';
 
@@ -1880,6 +2266,24 @@ function buildFuelCard(fuel) {
   const runIconColour = runClass==='danger'?'var(--red)':runClass==='warn'?'var(--amber)':'var(--green)';
   const lowBalanceNote = stats.remaining <= lowBalance
     ? '<div class="balance-hero-sub" style="color:var(--red-text);font-weight:600;margin-top:4px">Below your \u00a3'+lowBalance.toFixed(2)+' low balance warning</div>'
+    : '';
+  // Emergency credit, as a live state rather than only a past-tense
+  // reconciliation at top-up time.
+  //
+  // The debt sheet already handles "some of that top-up paid off a
+  // shortfall" after the fact, which was the right call. But the owner's
+  // own history shows the balance going negative three times in three
+  // months, and during those stretches the app showed a small positive
+  // number and a normal forecast when the real situation was borrowed
+  // money and an accruing debt the next top-up would swallow. A negative
+  // balance is a different state, not just a smaller number, and the card
+  // should say so.
+  const onEC = stats.remaining < 0;
+  const ecNote = onEC
+    ? '<div class="ec-banner">'+icon('warning')+
+      '<div><strong>On emergency credit</strong><div class="ec-sub">\u00a3'+
+      Math.abs(stats.remaining).toFixed(2)+' borrowed so far. Your next top-up pays this back first, '+
+      'and the standing charge keeps building while you\u2019re on it.</div></div></div>'
     : '';
   const cycle = calcCycleProgress(entries, stats.remaining);
   const trendDir = stats.trend ? stats.trend.dir : '';
@@ -1917,6 +2321,7 @@ function buildFuelCard(fuel) {
         '<div class="balance-hero-sub">'+daysLeftLabel+'</div>'+
         lowBalanceNote+
       '</div>'+
+      ecNote+
       (cycle?'<div class="progress-wrap"><div class="progress-fill'+(runClass?' '+runClass:'')+'" style="width:'+cycle.pct.toFixed(0)+'%"></div></div>':'')+
       '<div class="balance-hero-runout runout-row">'+
         '<span style="font-size:20px;color:'+runIconColour+'">'+icon('dot')+'</span>'+
@@ -2040,7 +2445,7 @@ function renderMeter() {
     return;
   }
 
-  statsEl.innerHTML = cards.map(c => c.html).join('') + '<div class="version-tag">v4.3</div>';
+  statsEl.innerHTML = cards.map(c => c.html).join('') + '<div class="version-tag">v4.7</div>';
 }
 
 // ── Top-up planner (§6.1) ─────────────────────────────────
@@ -2081,7 +2486,7 @@ function openTopupPlanner(fuel) {
   const dateInput = document.getElementById('planner-date');
   const defaultDate = new Date(plannerStats.lastDate.getTime() + 7*86400000);
   dateInput.value = toDateInputVal(defaultDate);
-  document.getElementById('planner-amount').value = '';
+  currencyReset(document.getElementById('planner-amount'), '');
   document.getElementById('planner-amount-result').innerHTML = '';
   plannerDateChanged();
 
@@ -2483,37 +2888,80 @@ function renderHistory() {
       if (prevForFuel) {
         const pb = parseFloat(prevForFuel.balance), cb = parseFloat(e.balance);
         const hrs = Math.abs((parseLocal(e.datetime) - parseLocal(prevForFuel.datetime)) / 3600000);
-        if (cb < pb) {
-          const spent = pb - cb;
+        // Mirrors the attribution order in calcDailyUsage: decide by entry
+        // TYPE first, not by which way the balance moved. A top-up that
+        // still ends lower than it started (£50 → add £10 → £45) is a
+        // top-up, and the usage across that gap is £15, not £5.
+        let spent = null;
+        if (isSwap || prevForFuel.type === 'swap') {
+          spent = null; // no meaningful spend across a meter replacement
+        } else if (isTopup && e.added != null) {
+          const debtRec = e.debtRecovered != null ? parseFloat(e.debtRecovered) : 0;
+          const drained = pb + parseFloat(e.added) - cb - debtRec;
+          if (drained > 0) spent = drained;
+        } else if (cb < pb) {
+          spent = pb - cb;
+        }
+        if (spent !== null && spent > 0) {
           const rateStr = hrs > 0 ? ' \u00b7 \u00a3' + (spent/hrs*24).toFixed(2) + '/day' : '';
           spendNote = '<div class="spend-annotation"><div class="spend-line"></div><div class="spend-val">\u2193 \u00a3'+spent.toFixed(2)+' in '+hrs.toFixed(1)+'h'+rateStr+'</div><div class="spend-line"></div></div>';
         }
       }
     }
 
-    const badge = isTopup
+    const isSwap = e.type === 'swap';
+    const badge = isSwap
+      ? '<span class="pill pill-amber" style="font-size:12px;padding:2px 7px">Meter swap</span>'
+      : isTopup
       ? '<span class="pill pill-green" style="font-size:12px;padding:2px 7px">Top-up</span>'
       : '<span class="pill pill-purple" style="font-size:12px;padding:2px 7px">Reading</span>';
-    // §4.2 — fuel identity on rows, only rendered when the filter is All
-    // (a marker repeated on every row when already scoped to one fuel by
-    // the active chip is noise, not information).
-    const fuelMarker = showMarkers
-      ? '<span style="color:var(--text3);margin-right:4px;display:inline-flex;vertical-align:-2px">'+icon(e._fuel==='gas'?'flame':'bolt')+'</span>'
+
+    // Row markers, reorganised so each of the two facts is stated once.
+    //
+    // Previously the row carried FOUR markers for two facts: the left edge
+    // said fuel, the square icon said type, a small inline icon said fuel
+    // again, and the pill said type again — and worse, both square glyphs
+    // (plug / bolt) read as electrical, so a gas row showed a plug.
+    //
+    // Now:
+    //   square GLYPH  -> fuel   (plug = electricity, flame = gas)
+    //   square TINT   -> type   (indigo = reading, green = top-up)
+    //   corner "+"    -> type, glanceable without relying on tint alone
+    //   left edge     -> fuel, for scanning runs of one meter in the All view
+    //   pill badge    -> type, in words
+    //
+    // The glyph is fuel ALWAYS, not just in the All view — in a filtered
+    // view it is then the row's only fuel cue, which is correct and costs
+    // nothing. The old inline duplicate is gone.
+    const fuelGlyph = icon(e._fuel === 'gas' ? 'flame' : 'plug');
+    // Corner "+" so top-up is readable from the icon itself and not from a
+    // background tint alone — tint is a weak signal at 36px and fails
+    // outright for anyone who can't separate the two hues.
+    const topupPip = isTopup
+      ? '<span class="entry-pip" aria-hidden="true">+</span>'
       : '';
     const edgeStyle = showMarkers
       ? 'border-left:3px solid '+(e._fuel==='gas'?'#936315':'#5C52B8')+';padding-left:10px;margin-left:-13px;'
       : '';
+    // The icon is decorative once the text says everything; the row already
+    // reads "£80.00 topped up ... Top-up" and the fuel is named here for
+    // screen readers so the glyph needs no label of its own.
+    const srFuel = '<span class="sr-only">'+(e._fuel==='gas'?'Gas':'Electricity')+'. </span>';
 
     html += '<div class="entry-row" style="'+edgeStyle+'">'+
-      '<div class="entry-icon '+(isTopup?'topup':'reading')+'">'+(isTopup?icon('bolt'):icon('plug'))+'</div>'+
+      '<div class="entry-icon-wrap fuel-'+(e._fuel==='gas'?'gas':'electricity')+'">'+
+        '<div class="entry-icon '+(isTopup?'topup':'reading')+'" aria-hidden="true">'+fuelGlyph+'</div>'+
+        topupPip+
+      '</div>'+
       '<div class="entry-body">'+
         '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">'+
-          '<div class="entry-main">'+fuelMarker+(isTopup?'+\u00a3'+parseFloat(e.added).toFixed(2)+' topped up':'\u00a3'+parseFloat(e.balance).toFixed(2)+' on meter')+'</div>'+
+          '<div class="entry-main">'+srFuel+(isSwap?'New meter \u00b7 \u00a3'+parseFloat(e.balance).toFixed(2)+' on it':isTopup?'+\u00a3'+parseFloat(e.added).toFixed(2)+' topped up':'\u00a3'+parseFloat(e.balance).toFixed(2)+' on meter')+'</div>'+
           badge+
         '</div>'+
         '<div class="entry-sub">'+fmt(parseLocal(e.datetime))+(isTopup?' \u00b7 After: \u00a3'+parseFloat(e.balance).toFixed(2):'')+
           (isTopup&&e.debtRecovered!=null?' \u00b7 <span style="color:var(--amber-text)">\u00a3'+parseFloat(e.debtRecovered).toFixed(2)+' to debt</span>':'')+
         '</div>'+
+        (e.note?'<div class="entry-note">'+escapeHtmlAttr(e.note)+'</div>':'')+
       '</div>'+
       '<div class="entry-actions">'+
         '<button class="btn-xs" onclick="startEdit('+e.id+',\''+e._fuel+'\')">Edit</button>'+
@@ -2522,21 +2970,25 @@ function renderHistory() {
   });
   if (sorted.length > 10) html += '<button class="btn-show-more" onclick="toggleShowAll()">'+(showAll?'Show less':'Show all '+sorted.length+' entries')+'</button>';
   el.innerHTML = html;
+  // The edit form is injected here with pre-filled amounts, so seed each
+  // field's digit state from its value — otherwise the first keypress in
+  // an edit field would start from empty and wipe the existing amount.
+  currencySyncAll(el);
 }
 
 function renderEditForm(e, fuel, showFuelName) {
   const isTopup=e.type==='topup';
   const twoCol=isTopup
     ?'<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">'+
-        '<div class="field" style="margin:0"><label>Amount added (\u00a3)</label><input type="number" id="edit-added" value="'+e.added+'" min="0" step="0.01"/></div>'+
-        '<div class="field" style="margin:0"><label>Balance after (\u00a3)</label><input type="number" id="edit-bal" value="'+e.balance+'" min="0" step="0.01"/></div>'+
+        '<div class="field" style="margin:0"><label>Amount added (\u00a3)</label><input type="text" inputmode="numeric" class="js-currency" id="edit-added" value="'+e.added+'"/></div>'+
+        '<div class="field" style="margin:0"><label>Balance after (\u00a3)</label><input type="text" inputmode="numeric" class="js-currency" id="edit-bal" value="'+e.balance+'"/></div>'+
       '</div>'
-    :'<div class="field"><label>Meter balance (\u00a3)</label><input type="number" id="edit-bal" value="'+e.balance+'" min="0" step="0.01"/></div>';
+    :'<div class="field"><label>Meter balance (\u00a3)</label><input type="text" inputmode="numeric" class="js-currency" id="edit-bal" value="'+e.balance+'"/></div>';
   // §6.2 — expose debtRecovered for correction. Leaving it blank and saving
   // clears the field entirely, so a wrongly-confirmed debt amount can be
   // undone without deleting and re-entering the whole top-up.
   const debtField = isTopup
-    ? '<div class="field"><label>Debt recovered (\u00a3) \u2014 optional</label><input type="number" id="edit-debt" value="'+(e.debtRecovered!=null?e.debtRecovered:'')+'" min="0" step="0.01" placeholder="Leave blank if none"/></div>'
+    ? '<div class="field"><label>Debt recovered (\u00a3) \u2014 optional</label><input type="text" inputmode="numeric" class="js-currency" id="edit-debt" value="'+(e.debtRecovered!=null?e.debtRecovered:'')+'" placeholder="Leave blank if none"/></div>'
     : '';
   // §4.5 — names the meter being edited when the surrounding list doesn't
   // already make that obvious (i.e. the All filter, where rows from both
@@ -2550,6 +3002,12 @@ function renderEditForm(e, fuel, showFuelName) {
     '<div class="field"><label>Date &amp; time</label><input type="datetime-local" id="edit-dt" value="'+e.datetime+'"/></div>'+
     twoCol+
     debtField+
+    // Free-text note. Anomalies in this data are almost always explicable
+    // — guests staying, immersion heater left on, meter engineer visit,
+    // a cold snap — but without somewhere to record that, a reading that
+    // looks wrong stays looking wrong forever, and there is no way to
+    // tell a real spike from a mistyped one six months later.
+    '<div class="field"><label>Note (optional)</label><input type="text" id="edit-note" maxlength="120" value="'+escapeHtmlAttr(e.note||'')+'" placeholder="e.g. guests staying, immersion on"/></div>'+
     '<div class="edit-btns">'+
       '<button class="btn-cancel" onclick="cancelEdit()">Cancel</button>'+
       '<button class="btn-save" onclick="saveEdit('+e.id+',\''+e.type+'\',\''+fuel+'\')">Save</button>'+
@@ -2594,19 +3052,51 @@ function saveEdit(id,type,fuel) {
         else delete u.debtRecovered; // blank or zero clears it entirely
       }
     }
+    const noteEl = document.getElementById('edit-note');
+    if (noteEl) {
+      const n = noteEl.value.trim();
+      if (n) u.note = n; else delete u.note; // blank clears it
+    }
     return u;
   });
   saveEntries(entries, fuel); editingId=null; editingFuel=null; renderHistory();
 }
+// Delete is undoable, like save.
+//
+// It was the more destructive of the two actions and had the weaker
+// protection: save offered Undo, delete offered a confirm dialog and
+// then permanence. A confirm dialog catches "did you mean to tap that",
+// which is the easy mistake; it does nothing for "I deleted the wrong
+// row", which is the one that actually loses data. Reuses the same toast.
+let lastDeleted = null; // { entry, fuel, index }
 function deleteEntry(id, fuel) {
   const originalEntries = loadEntries(fuel);
-  if (!originalEntries.some(e => e.id === id)) {
+  const idx = originalEntries.findIndex(e => e.id === id);
+  if (idx === -1) {
     console.warn('deleteEntry: id ' + id + ' not found in ' + fuel + ' — not deleting');
     renderHistory();
     return;
   }
+  lastDeleted = { entry: originalEntries[idx], fuel: fuel, index: idx };
   saveEntries(originalEntries.filter(e=>e.id!==id), fuel);
   renderHistory();
+  showDeleteToast(isMultiFuel()
+    ? 'Deleted from ' + FUEL_LABELS[fuel]
+    : 'Entry deleted');
+}
+function undoDelete() {
+  if (!lastDeleted) return;
+  const { entry, fuel, index } = lastDeleted;
+  const entries = loadEntries(fuel);
+  // Put it back where it was rather than appending — order is by datetime
+  // on render, but keeping the array stable avoids any surprise if that
+  // ever changes.
+  entries.splice(Math.min(index, entries.length), 0, entry);
+  saveEntries(entries, fuel);
+  lastDeleted = null;
+  hideToast();
+  renderHistory();
+  if (document.getElementById('page-meter').classList.contains('active')) renderMeter();
 }
 function toggleShowAll() { showAll=!showAll; renderHistory(); }
 
@@ -2702,10 +3192,7 @@ function renderSettings() {
             '<div><div class="settings-label">Top-up reminder (days)</div><div class="settings-sub">Warn when this many days left</div></div>' +
             '<input class="settings-input" type="number" min="1" step="1" value="' + (s.topupRemind||5) + '" onchange="saveSetting(\'topupRemind\',this.value,\'' + fuel + '\')" placeholder="5" />' +
           '</div>' +
-          '<div class="settings-row">' +
-            '<div><div class="settings-label">Weekly standing charge (\u00a3)</div><div class="settings-sub">Fixed daily charge expressed weekly</div></div>' +
-            '<input class="settings-input" type="number" min="0" step="0.01" value="' + (s.standingCharge||'') + '" onchange="saveSetting(\'standingCharge\',this.value,\'' + fuel + '\')" placeholder="0.00" />' +
-          '</div>' +
+          scRatesHTML(fuel) +
           '<div class="settings-row">' +
             '<div><div class="settings-label">Tariff rate (p/kWh)</div><div class="settings-sub">Optional \u2014 for energy estimate</div></div>' +
             '<input class="settings-input" type="number" min="0" step="0.1" value="' + (s.tariff||'') + '" onchange="saveSetting(\'tariff\',this.value,\'' + fuel + '\')" />' +
@@ -2741,15 +3228,38 @@ function exportCSV() {
   });
   allRows.sort((a,b) => parseLocal(a.entry.datetime) - parseLocal(b.entry.datetime));
 
+  // Settings ride along as `#` comment lines ahead of the header.
+  //
+  // Previously the export carried readings only — so the exact disaster
+  // this and the 30-day nudge exist to protect against (clear browser
+  // data, restore from CSV) gave back every reading and none of the
+  // standing charge, tariff, tracked fuels or buffer. Worse, because the
+  // standing charge is applied at calculation time, restoring with a
+  // blank one silently rewrites every historical "usage only" figure in
+  // the app. The restore looks successful and the numbers are quietly
+  // different.
+  //
+  // `#` lines are ignored by spreadsheet apps as comments and are skipped
+  // by this file's own importer, so the format stays a superset of what
+  // older exports produced — the CSV-is-a-contract constraint holds.
+  let csv = '';
+  csv += '# Meter Tracker backup \u2014 ' + new Date().toISOString() + '\n';
+  csv += '# Settings below are restored on import. Edit with care.\n';
+  csv += '#SETTINGS ' + JSON.stringify({
+    trackedFuels: fuels,
+    global: loadGlobalSettings(),
+    perFuel: fuels.reduce((acc, f) => { acc[f] = loadSettings(f); return acc; }, {})
+  }) + '\n';
+
   // §6.2 — Debt Recovered appended as a new trailing column. Appending
   // (not inserting) keeps old parsers that only read the first five
   // columns unaffected, and this file's own import already header-sniffs
   // rather than assuming a fixed column count, so it reads its own output
   // correctly either way.
-  let csv='Date,Time,Fuel,Type,Amount Added (\u00a3),Balance (\u00a3),Debt Recovered (\u00a3)\n';
+  csv+='Date,Time,Fuel,Type,Amount Added (\u00a3),Balance (\u00a3),Debt Recovered (\u00a3),Note\n';
   allRows.forEach(({entry: e, fuel}) => {
     const d=parseLocal(e.datetime);
-    csv+=d.toLocaleDateString('en-GB')+','+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+','+fuel+','+(e.type||'reading')+','+(e.added||'')+','+e.balance+','+(e.debtRecovered||'')+'\n';
+    csv+=d.toLocaleDateString('en-GB')+','+d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+','+fuel+','+(e.type||'reading')+','+(e.added||'')+','+e.balance+','+(e.debtRecovered||'')+','+csvEscape(e.note||'')+'\n';
   });
   const url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   const a=document.createElement('a');
@@ -2790,6 +3300,15 @@ function icsAllDayDate(date) {
   const pad = n => String(n).padStart(2,'0');
   return date.getFullYear()+pad(date.getMonth()+1)+pad(date.getDate());
 }
+// Notes are free text rendered into both an HTML attribute and element
+// text, so both paths need escaping — a note containing a quote would
+// otherwise break out of the value="" and mangle the form.
+function escapeHtmlAttr(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')
+    .replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
 function icsEscape(text) {
   // RFC 5545 §3.3.11 — backslash, semicolon, comma, and newline must be
   // escaped in text values.
@@ -2846,11 +3365,56 @@ function exportReminder() {
   URL.revokeObjectURL(url);
 }
 
+// ── CSV field handling ────────────────────────────────────
+// The Note column is free text, so a naive split(',') would break on the
+// first note containing a comma — and silently, by shifting every later
+// column left. These two are inverses: quote a field only when it needs
+// it (comma, quote, or newline), doubling any embedded quotes per RFC
+// 4180; and parse a row respecting those quotes.
+function csvEscape(v) {
+  const s = String(v == null ? '' : v);
+  if (!/[",\n\r]/.test(s)) return s;
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+function parseCsvRow(line) {
+  const out = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (inQ) {
+      if (c === '"') {
+        if (line[i+1] === '"') { cur += '"'; i++; }
+        else inQ = false;
+      } else cur += c;
+    } else if (c === '"') {
+      inQ = true;
+    } else if (c === ',') {
+      out.push(cur.trim()); cur = '';
+    } else cur += c;
+  }
+  out.push(cur.trim());
+  return out;
+}
+
 function importCSV(input) {
   const file=input.files[0]; if(!file) return;
   const reader=new FileReader();
   reader.onload=function(e){
-    const lines=e.target.result.split('\n').filter(l=>l.trim());
+    const rawLines=e.target.result.split('\n').filter(l=>l.trim());
+    if (!rawLines.length) return;
+
+    // Pull the settings block out of the `#` comment lines, then drop all
+    // comments so the rest of the parser sees exactly the shape it always
+    // has. A file without a settings block (any older export, or a
+    // hand-made one) simply restores no settings — readings still import.
+    let restoredSettings = null;
+    rawLines.forEach(l => {
+      const t = l.trim();
+      if (t.toUpperCase().startsWith('#SETTINGS')) {
+        try { restoredSettings = JSON.parse(t.slice(t.indexOf('{'))); } catch (_) {}
+      }
+    });
+    const lines = rawLines.filter(l => !l.trim().startsWith('#'));
     if (!lines.length) return;
     const header=lines[0].toLowerCase();
     if (!header.includes('date')||!header.includes('balance')) {
@@ -2863,7 +3427,7 @@ function importCSV(input) {
     // branch per column. Old 5-column files from before the Fuel column
     // existed, current 6-column files, and future 7-column files with
     // Debt Recovered all parse through the same path.
-    const cols=lines[0].split(',').map(c=>c.trim().toLowerCase());
+    const cols=parseCsvRow(lines[0]).map(c=>c.trim().toLowerCase());
     const idxDate = cols.indexOf('date');
     const idxTime = cols.indexOf('time');
     const idxFuel = cols.indexOf('fuel');
@@ -2871,6 +3435,7 @@ function importCSV(input) {
     const idxAdded = cols.findIndex(c=>c.startsWith('amount added'));
     const idxBalance = cols.findIndex(c=>c.startsWith('balance'));
     const idxDebt = cols.findIndex(c=>c.startsWith('debt recovered'));
+    const idxNote = cols.indexOf('note');
     const minCols = Math.max(idxDate,idxTime,idxType,idxAdded,idxBalance) + 1;
 
     // §4.2 — the highest-priority fix in the phase. The old code had a
@@ -2897,7 +3462,7 @@ function importCSV(input) {
     }
 
     for (let i=1;i<lines.length;i++){
-      const row=lines[i].split(',').map(c=>c.trim());
+      const row=parseCsvRow(lines[i]);
       if (row.length<minCols) continue;
       const date = row[idxDate];
       const time = idxTime>=0 ? row[idxTime] : '';
@@ -2911,6 +3476,7 @@ function importCSV(input) {
       const addedAmt = idxAdded>=0 ? row[idxAdded] : '';
       const balance = idxBalance>=0 ? row[idxBalance] : '';
       const debtAmt = idxDebt>=0 ? row[idxDebt] : '';
+      const noteTxt = idxNote>=0 ? (row[idxNote]||'') : '';
       if (!date||!balance) continue;
       const parts=date.split('/');
       if (parts.length!==3) continue;
@@ -2924,11 +3490,37 @@ function importCSV(input) {
       const entry={id:Date.now()+i,type:type||'reading',datetime:dt,balance:bal.toFixed(2)};
       if ((type==='topup')&&addedAmt){ const a=parseFloat(addedAmt); if(!isNaN(a)) entry.added=a.toFixed(2); }
       if ((type==='topup')&&debtAmt){ const dRec=parseFloat(debtAmt); if(!isNaN(dRec)&&dRec>0) entry.debtRecovered=dRec.toFixed(2); }
+      if (noteTxt) entry.note = noteTxt;
       bucket.entries.push(entry); bucket.keys.add(key); perFuelAdded[rowFuel] = (perFuelAdded[rowFuel]||0) + 1;
     }
 
     // Save each fuel's updated list to its own storage key.
     Object.keys(perFuelExisting).forEach(fuel => saveEntries(perFuelExisting[fuel], fuel));
+
+    // Restore settings from the backup header, if present. Done after the
+    // readings so a malformed settings block can never cost you the data.
+    // Per-fuel settings are merged over what's there rather than
+    // replacing wholesale, so restoring a single-fuel backup onto a
+    // dual-fuel install doesn't wipe the untouched fuel's config.
+    let settingsRestored = false;
+    if (restoredSettings) {
+      try {
+        if (Array.isArray(restoredSettings.trackedFuels) && restoredSettings.trackedFuels.length) {
+          localStorage.setItem('meter-tracked-fuels', JSON.stringify(restoredSettings.trackedFuels));
+          settingsRestored = true;
+        }
+        if (restoredSettings.global && typeof restoredSettings.global === 'object') {
+          saveGlobalSettings(Object.assign(loadGlobalSettings(), restoredSettings.global));
+          settingsRestored = true;
+        }
+        if (restoredSettings.perFuel && typeof restoredSettings.perFuel === 'object') {
+          Object.keys(restoredSettings.perFuel).forEach(f => {
+            saveSettings(Object.assign(loadSettings(f), restoredSettings.perFuel[f]), f);
+          });
+          settingsRestored = true;
+        }
+      } catch (_) { /* readings are already safe */ }
+    }
     input.value='';
 
     // Honest per-fuel breakdown, per the doc's exact example wording,
@@ -2950,6 +3542,7 @@ function importCSV(input) {
       summary += ' Note: ' + untracked.join(' and ') + ' ' + (untracked.length===1?'is':'are') +
         ' not currently in your tracked meters (Settings \u2192 Meters I track) \u2014 the data is saved but its screens are hidden.';
     }
+    if (settingsRestored) summary += ' Settings restored from the backup.';
     openModal('Import complete', summary, ()=>{ showPage('history'); });
   };
   reader.readAsText(file);
@@ -2972,15 +3565,28 @@ function openModal(title,msg,onConfirm) {
 }
 function closeModal() { document.getElementById('modal').classList.remove('open'); }
 
+// Toggles the amount field, which is meaningless for a swap — nothing was
+// added, there is simply a different meter now.
+function tuKindChanged() {
+  const kind = document.getElementById('tu-kind').value;
+  const isSwap = kind === 'swap';
+  const addedField = document.getElementById('tu-added-field');
+  const afterLabel = document.getElementById('tu-after-label');
+  if (addedField) addedField.style.display = isSwap ? 'none' : '';
+  if (afterLabel) afterLabel.innerHTML = isSwap ? 'Balance on the new meter (\u00a3)' : 'Balance after (\u00a3)';
+}
+
 function submitManualTopup() {
   const dt=document.getElementById('tu-dt').value;
+  const kindEl=document.getElementById('tu-kind');
+  const isSwap = kindEl && kindEl.value === 'swap';
   const added=document.getElementById('tu-added').value;
   const after=document.getElementById('tu-after').value;
   const errEl=document.getElementById('tu-err');
   errEl.style.display='none';
-  if (!dt||!added||!after) { errEl.textContent='Please fill in all fields.'; errEl.style.display='block'; return; }
+  if (!dt||!after||(!isSwap && !added)) { errEl.textContent='Please fill in all fields.'; errEl.style.display='block'; return; }
   const addedVal=parseFloat(added),afterVal=parseFloat(after);
-  if (isNaN(addedVal)||addedVal<=0) { errEl.textContent='Enter a valid amount added.'; errEl.style.display='block'; return; }
+  if (!isSwap && (isNaN(addedVal)||addedVal<=0)) { errEl.textContent='Enter a valid amount added.'; errEl.style.display='block'; return; }
   if (isNaN(afterVal)||afterVal<0) { errEl.textContent='Enter a valid balance.'; errEl.style.display='block'; return; }
   // §5.7 — fuel comes from the selector when multi-fuel (the audit that
   // deleted the header toggle found this form would otherwise be
@@ -2998,14 +3604,18 @@ function submitManualTopup() {
     .sort((a,b) => parseLocal(b.datetime) - parseLocal(a.datetime));
   const prevBal = priorEntries.length ? parseFloat(priorEntries[0].balance) : null;
 
-  const newEntry = {id:Date.now(),type:'topup',datetime:dt,balance:afterVal.toFixed(2),added:addedVal.toFixed(2)};
+  const newEntry = isSwap
+    ? {id:Date.now(),type:'swap',datetime:dt,balance:afterVal.toFixed(2)}
+    : {id:Date.now(),type:'topup',datetime:dt,balance:afterVal.toFixed(2),added:addedVal.toFixed(2)};
   entries.push(newEntry);
   saveEntries(entries, fuel);
   document.getElementById('tu-dt').value=toInputVal(new Date());
-  document.getElementById('tu-added').value='';
-  document.getElementById('tu-after').value='';
+  currencyReset(document.getElementById('tu-added'), '');
+  currencyReset(document.getElementById('tu-after'), '');
 
-  if (prevBal != null) {
+  // Debt reconciliation only makes sense for a top-up — there is no
+  // arithmetic to reconcile across a meter replacement.
+  if (!isSwap && prevBal != null) {
     maybeOfferDebtReconciliation(newEntry.id, prevBal, addedVal, afterVal, fuel);
   }
   renderHistory();
