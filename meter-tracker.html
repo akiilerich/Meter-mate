@@ -681,7 +681,7 @@
         <li>ACE9000 prepayment meter (British Gas)</li>
       </ul>
     </div>
-    <div class="version-tag">v4.7 &#183; ACE9000 &#183; British Gas</div>
+    <div class="version-tag">v4.8 &#183; ACE9000 &#183; British Gas</div>
   </div>
 </div>
 
@@ -2445,7 +2445,7 @@ function renderMeter() {
     return;
   }
 
-  statsEl.innerHTML = cards.map(c => c.html).join('') + '<div class="version-tag">v4.7</div>';
+  statsEl.innerHTML = cards.map(c => c.html).join('') + '<div class="version-tag">v4.8</div>';
 }
 
 // ── Top-up planner (§6.1) ─────────────────────────────────
@@ -2873,6 +2873,7 @@ function renderHistory() {
   displayed.forEach((e) => {
     if (editingId === e.id && editingFuel === e._fuel) { html += renderEditForm(e, e._fuel, showMarkers); return; }
     const isTopup = e.type === 'topup';
+    const isSwap = e.type === 'swap';
 
     // §4.3 — the fix. Look up the previous reading from THIS ROW'S OWN
     // fuel's full sorted-ascending list, by finding this entry's index
@@ -2909,7 +2910,6 @@ function renderHistory() {
       }
     }
 
-    const isSwap = e.type === 'swap';
     const badge = isSwap
       ? '<span class="pill pill-amber" style="font-size:12px;padding:2px 7px">Meter swap</span>'
       : isTopup
